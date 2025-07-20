@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<body>
+  <h1>เกมจับคู่พยัญชนะไทย</h1>
+  <div id="score">
+  คะแนนสะสม: <span id="totalScore">0</span> | ⏱ เหลือเวลา: <span id="timeLeft">60</span> วินาที
+</div>
+<button id="startBtn" onclick="startGame()">เริ่มเกม</button>
+<button id="restartBtn" onclick="restartGame()" style="display:none;">เล่นต่อ</button>
+
+
+
+  <div id="game"></div>
+  <!-- Popup, เสียง และ Script เดิมตามหลังได้ -->
+</body>
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'TH Sarabun New', sans-serif;
+    background: #e0f7fa;
+    text-align: center;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  body > *:not(#game) {
+    z-index: 2;
+  }
+
+  #game {
+    display: grid;
+    justify-content: center;
+    align-content: center;
+    margin: auto;
+    padding: 1vh;
+    gap: 10px;
+    max-height: 70vh;
+    max-width: 95vw;
+  }
+
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(16px, 4vw, 36px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: transform 0.2s, background-color 0.2s;
+  cursor: pointer;
+}
+
+.card:hover {
+  background-color: #c8e6c9;
+  transform: scale(1.05);
+}
+
+.card.selected {
+  background-color: #ffccbc !important;
+  transform: scale(1.05);
+  pointer-events: none;
+  opacity: 0.6;
+  transition: background-color 0.4s, opacity 0.4s;
+}
+
+.card img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+</style>
+
+
+
+
+
+
+</head>
+<body>
+    <div id="popup" style="display:none;">
+        <div id="popupBox">
+            <div id="popupText">🎉 คุณได้ 120 คะแนน!</div>
+            <button onclick="closePopup()">ตกลง</button>
+        </div>
+    </div>
+
+    <div id="game"></div>
+
+    <audio id="hoverSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/hover.mp3"></audio>
+    <audio id="clickSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/click.mp3"></audio>
+    <audio id="wrongSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/wrong.mp3"></audio>
+    <audio id="gameoverSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/game-over.mp3"></audio>
+    <audio id="winSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/winning.mp3"></audio>
+    <audio id="coinSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/coin.mp3"></audio>
+
+    <script>
+
+
+      window.addEventListener("resize", calculateCardSize);
+
+        let countdownInterval;
+        let timeLeft;
+        let startTime;
+
+        let selected = [];
+        let remainingChars = [];
+        let score = 0;
+        let totalScore = 0;
+        let allMatched = 0; // จำนวนการจับคู่ที่สำเร็จ
+
+        const hoverSound = document.getElementById("hoverSound");
+        const clickSound = document.getElementById("clickSound");
+        const wrongSound = document.getElementById("wrongSound");
+        const gameoverSound = document.getElementById("gameoverSound");
+        const winSound = document.getElementById("winSound");
+        const coinSound = document.getElementById("coinSound");
+
+const chars = [
+  { id: "ก", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ก.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ก.mp3" },
+  { id: "ข", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ข.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ข.mp3" },
+  { id: "ฃ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฃ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฃ.mp3" },
+  { id: "ค", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ค.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ค.mp3" },
+  { id: "ฅ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฅ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฅ.mp3" },
+  { id: "ฆ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฆ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฆ.mp3" },
+  { id: "ง", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ง.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ง.mp3" },
+  { id: "จ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/จ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/จ.mp3" },
+  { id: "ฉ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฉ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฉ.mp3" },
+  { id: "ช", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ช.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ช.mp3" },
+  { id: "ซ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ซ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ซ.mp3" },
+  { id: "ฌ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฌ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฌ.mp3" },
+  { id: "ญ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ญ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ญ.mp3" },
+  { id: "ฎ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฎ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฎ.mp3" },
+  { id: "ฏ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฏ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฏ.mp3" },
+  { id: "ฐ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฐ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฐ.mp3" },
+  { id: "ฑ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฑ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฑ.mp3" },
+  { id: "ฒ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฒ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฒ.mp3" },
+  { id: "ณ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ณ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ณ.mp3" },
+  { id: "ด", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ด.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ด.mp3" },
+  { id: "ต", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ต.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ต.mp3" },
+  { id: "ถ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ถ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ถ.mp3" },
+  { id: "ท", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ท.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ท.mp3" },
+  { id: "ธ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ธ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ธ.mp3" },
+  { id: "น", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/น.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/น.mp3" },
+  { id: "บ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/บ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/บ.mp3" },
+  { id: "ป", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ป.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ป.mp3" },
+  { id: "ผ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ผ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ผ.mp3" },
+  { id: "ฝ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฝ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฝ.mp3" },
+  { id: "พ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/พ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/พ.mp3" },
+  { id: "ฟ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฟ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฟ.mp3" },
+  { id: "ภ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ภ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ภ.mp3" },
+  { id: "ม", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ม.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ม.mp3" },
+  { id: "ย", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ย.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ย.mp3" },
+  { id: "ร", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ร.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ร.mp3" },
+  { id: "ล", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ล.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ล.mp3" },
+  { id: "ว", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ว.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ว.mp3" },
+  { id: "ศ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ศ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ศ.mp3" },
+  { id: "ษ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ษ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ษ.mp3" },
+  { id: "ส", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ส.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ส.mp3" },
+  { id: "ห", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ห.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ห.mp3" },
+  { id: "ฬ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฬ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฬ.mp3" },
+  { id: "อ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/อ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/อ.mp3" },
+  { id: "ฮ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฮ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฮ.mp3" }
+];
+
+
+        function playAudio(audio) {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        function startGame() {
+  document.getElementById("startBtn").style.display = "none";
+  document.getElementById("restartBtn").style.display = "inline-block";
+  totalScore = 0;
+  document.getElementById("totalScore").textContent = 0;
+  document.getElementById("timeLeft").textContent = 60;
+  remainingChars = shuffle([...chars]);
+  startRound();
+}
+
+
+          function startRound() {
+              startTime = Date.now();
+              timeLeft = 60;
+              document.getElementById("timeLeft").textContent = timeLeft;
+              clearInterval(countdownInterval);
+              countdownInterval = setInterval(() => {
+                  timeLeft--;
+                  document.getElementById("timeLeft").textContent = timeLeft;
+                  if (timeLeft <= 0) {
+                      clearInterval(countdownInterval);
+                      playAudio(gameoverSound);
+                      showPopup("⏱ หมดเวลา! กรุณากด ' เริ่มใหม่ ' เพื่อเล่นอีกครั้ง", false);
+                  }
+              }, 1000);
+
+              const game = document.getElementById("game");
+              game.innerHTML = "";
+              selected = [];
+              score = 0;
+
+              // สร้างสำเนาชุดพยัญชนะทั้งหมด และสุ่มใหม่ทุกครั้งโดยไม่ซ้ำ
+              const pool = shuffle([...chars]);
+              const thisRoundChars = pool.slice(0, 12); // หยิบ 12 ตัวแรกไม่ซ้ำกันแน่นอน
+
+              let cards = [];
+              thisRoundChars.forEach(char => {
+                  cards.push({ type: 'char', id: char.id, sound: char.sound });
+                  cards.push({ type: 'img', id: char.id, img: char.img, sound: char.sound });
+              });
+
+              shuffle(cards);
+
+cards.forEach((card, index) => {
+  const div = document.createElement("div");
+  div.classList.add("card");
+  div.dataset.index = index;
+  div.dataset.id = card.id;
+  div.dataset.type = card.type;
+
+  if (card.type === 'char') {
+    div.textContent = card.id;
+  } else {
+    const img = document.createElement("img");
+    img.src = card.img;
+    div.appendChild(img);
+  }
+
+  div.onclick = () => selectCard(div, card);
+  div.onmouseenter = () => playAudio(hoverSound);
+  game.appendChild(div);
+});
+
+// ✅ คำนวณขนาดเมื่อเพิ่มครบ
+calculateCardSize();
+
+
+              calculateCardSize();
+          }
+
+        function restartGame() {
+            closePopup();
+            clearInterval(countdownInterval);
+            totalScore = 0;
+            document.getElementById("totalScore").textContent = totalScore;
+            remainingChars = shuffle([...chars]);
+            document.getElementById("game").innerHTML = "";
+            startRound();
+        }
+
+        function selectCard(div, card) {
+            if (selected.length >= 2 || div.classList.contains("selected")) return;
+            div.classList.add("selected");
+            playAudio(clickSound);
+            selected.push({ div, id: card.id, sound: card.sound });
+
+            if (selected.length === 2) {
+                const [first, second] = selected;
+                if (first.id === second.id) {
+                    new Audio(first.sound).play().catch(() => {});
+                    playAudio(coinSound);
+                    showEffect(first.div);
+                    showEffect(second.div);
+                    totalScore += 10;
+                    score += 10;
+                    document.getElementById("totalScore").textContent = totalScore;
+
+                    setTimeout(() => {
+                        first.div.style.display = "none"; // ซ่อนการ์ดที่จับคู่ถูก
+                        second.div.style.display = "none"; // ซ่อนการ์ดที่จับคู่ถูก
+                        selected = [];
+
+                        // ตรวจสอบว่าเกมจบครบทุกตัวแล้ว
+                        if ([...document.querySelectorAll(".card")].every(c => c.style.display === "none")) {
+                            setTimeout(() => {
+                                if (remainingChars.length > 0) {
+                                    startRound(); // เริ่มรอบใหม่
+                                } else {
+                                    showPopup(`🎊 เกมจบแล้ว! คุณสะสมได้ทั้งหมด ${totalScore} คะแนน!`, true);
+                                }
+                            }, 500);
+                        }
+                    }, 600);
+                } else {
+                    playAudio(wrongSound);
+                    totalScore = Math.max(0, totalScore - 5);
+                    document.getElementById("totalScore").textContent = totalScore;
+                    setTimeout(() => {
+                        first.div.classList.remove("selected");
+                        second.div.classList.remove("selected");
+                        selected = [];
+                    }, 800);
+                }
+            }
+        }
+
+        function showEffect(div) {
+            const effect = document.createElement("div");
+            effect.className = "effect";
+            div.appendChild(effect);
+            setTimeout(() => div.removeChild(effect), 800);
+        }
+
+        function showPopup(msg, withConfetti = false) {
+            document.getElementById("popupText").innerHTML = msg;
+            document.getElementById("popup").style.display = "flex";
+            if (withConfetti) launchConfetti();
+        }
+
+        function closePopup() {
+            document.getElementById("popup").style.display = "none";
+        }
+
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            let particles = [];
+            for (let i = 0; i < 150; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    r: Math.random() * 6 + 4,
+                    c: `hsl(${Math.random()*360}, 100%, 60%)`,
+                    v: Math.random() * 4 + 2
+                });
+            }
+            let animation = setInterval(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.y += p.v;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = p.c;
+                    ctx.fill();
+                });
+                if (particles.every(p => p.y > canvas.height)) clearInterval(animation);
+            }, 30);
+        }
+
+window.onload = () => {
+  
+function calculateCardSize() {
+  const game = document.getElementById("game");
+  const padding = 10;
+  const cardCount = game.children.length;
+  const containerWidth = window.innerWidth * 0.95;
+  const containerHeight = window.innerHeight * 0.7;
+
+  let bestCols = 1;
+  let bestSize = 0;
+
+  for (let cols = 1; cols <= cardCount; cols++) {
+    const rows = Math.ceil(cardCount / cols);
+    const cardWidth = Math.floor((containerWidth - padding * (cols - 1)) / cols);
+    const cardHeight = Math.floor((containerHeight - padding * (rows - 1)) / rows);
+    const size = Math.min(cardWidth, cardHeight);
+
+    const totalWidth = size * cols + padding * (cols - 1);
+    const totalHeight = size * rows + padding * (rows - 1);
+
+    if (totalWidth <= containerWidth && totalHeight <= containerHeight && size > bestSize) {
+      bestSize = size;
+      bestCols = cols;
+    }
+  }
+
+  game.style.gridTemplateColumns = `repeat(${bestCols}, ${bestSize}px)`;
+  game.style.gridGap = `${padding}px`;
+
+  const cards = game.querySelectorAll('.card');
+  cards.forEach(card => {
+    card.style.width = `${bestSize}px`;
+    card.style.height = `${bestSize}px`;
+    card.style.fontSize = `${bestSize * 0.4}px`;
+  });
+}
+
+window.addEventListener("resize", calculateCardSize);
+
+
+
+         calculateCardSize(); // เตรียม layout
+};
+
+function calculateCardSize() {
+  const game = document.getElementById("game");
+  const padding = 10;
+  const cardCount = game.children.length;
+  const containerWidth = window.innerWidth * 0.95;
+  const containerHeight = window.innerHeight * 0.7;
+
+  let bestCols = 1;
+  let bestSize = 0;
+
+  for (let cols = 1; cols <= cardCount; cols++) {
+    const rows = Math.ceil(cardCount / cols);
+    const cardWidth = Math.floor((containerWidth - padding * (cols - 1)) / cols);
+    const cardHeight = Math.floor((containerHeight - padding * (rows - 1)) / rows);
+    const size = Math.min(cardWidth, cardHeight);
+
+    const totalWidth = size * cols + padding * (cols - 1);
+    const totalHeight = size * rows + padding * (rows - 1);
+
+    if (totalWidth <= containerWidth && totalHeight <= containerHeight && size > bestSize) {
+      bestSize = size;
+      bestCols = cols;
+    }
+  }
+
+  game.style.gridTemplateColumns = `repeat(${bestCols}, ${bestSize}px)`;
+  game.style.gridGap = `${padding}px`;
+
+  const cards = game.querySelectorAll('.card');
+  cards.forEach(card => {
+    card.style.width = `${bestSize}px`;
+    card.style.height = `${bestSize}px`;
+    card.style.fontSize = `${bestSize * 0.4}px`;
+  });
+}
+window.addEventListener("resize", calculateCardSize);
+
+
+function calculateOptimalGrid(cardCount = 24) {
+  const game = document.getElementById("game");
+  const padding = 10;
+
+  const containerWidth = game.clientWidth;
+  const containerHeight = game.clientHeight;
+
+  let bestCols = 1;
+  let bestRows = cardCount;
+  let bestSize = 0;
+
+  for (let cols = 1; cols <= cardCount; cols++) {
+    const rows = Math.ceil(cardCount / cols);
+    const cardWidth = Math.floor((containerWidth - padding * (cols + 1)) / cols);
+    const cardHeight = Math.floor((containerHeight - padding * (rows + 1)) / rows);
+    const size = Math.min(cardWidth, cardHeight);
+
+    if (size > bestSize) {
+      bestSize = size;
+      bestCols = cols;
+      bestRows = rows;
+    }
+  }
+
+  return { cols: bestCols, rows: bestRows, size: bestSize };
+}
+function startGame() {
+  document.getElementById("startBtn").style.display = "none";
+  document.getElementById("restartBtn").style.display = "inline-block";
+  remainingChars = shuffle([...chars]);
+  startRound();
+  
+}
+function restartGame() {
+  closePopup();
+  clearInterval(countdownInterval);
+  document.getElementById("game").innerHTML = "";
+  startRound();
+}
+
+
+    </script>
+
+</body>
+</html>
+
+
+
+
