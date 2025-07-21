@@ -2,9 +2,10 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>เกมจับคู่พยัญชนะไทย</title> <style>
-        /* CSS styles will go here */
 
+    /* CSS styles will go here */
 
+<styles>
     html, body {
         margin: 0;
         padding: 0;
@@ -123,39 +124,326 @@
             opacity: 0;
         }
     }
+    /* CSS สำหรับส่วน Login/Register/Status */
+    /* เพิ่ม CSS สำหรับปุ่ม Google Login */
+#authContainer button.google-login-btn {
+    background: #DB4437; /* สีแดงของ Google */
+    color: white;
+    margin-top: 10px; /* เพิ่มระยะห่างจากปุ่มเดิม */
+    display: flex; /* จัดให้ไอคอนและข้อความอยู่กึ่งกลาง */
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* ระยะห่างระหว่างไอคอนกับข้อความ */
+    width: calc(100% - 10px); /* ให้ปุ่มกว้างเท่ากับ input fields */
+}
+#authContainer button.google-login-btn img {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+}
+        #authContainer {
+            margin: 20px auto; /* จัดกึ่งกลาง */
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 90%;
+            background: #f9f9f9;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        #authContainer h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        #authContainer input {
+            width: calc(100% - 22px); /* ลบ padding+border ออก */
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box; /* สำคัญ: เพื่อให้ความกว้างรวม padding และ border */
+        }
+        #authContainer button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        #authContainer button.login-btn { background: #4CAF50; color: white; }
+        #authContainer button.register-btn { background: #008CBA; color: white; }
+        #authContainer button.logout-btn { background: #f44336; color: white; }
 
+        #authStatus {
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #333;
+        }
 
-
-
+        /* ซ่อนส่วนเกมเมื่อยังไม่ได้ Login */
+        #gameArea {
+            display: none; /* ซ่อนตอนแรก */
+            flex-direction: column;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
-    <h1>เกมจับคู่พยัญชนะไทย</h1>
-    <div id="score">
-        คะแนนสะสม: <span id="totalScore">0</span> | ⏱ เหลือเวลา: <span id="timeLeft">60</span> วินาที
-    </div>
-    <button id="startBtn" onclick="startGame()">เริ่มเกม</button>
-    <button id="restartBtn" onclick="restartGame()" style="display:none;">เล่นต่อ</button>
-
-    <div id="game"></div>
-
-    <div id="popup" style="display:none;">
-        <div id="popupBox">
-            <div id="popupText">🎉 คุณได้ 120 คะแนน!</div>
-            <button onclick="closePopup()">ตกลง</button>
+   
+    <div id="authContainer">
+        <h2>เข้าสู่ระบบ / ลงทะเบียน</h2>
+        <div id="authStatus"></div>
+        <input type="email" id="email" placeholder="อีเมล">
+        <input type="password" id="password" placeholder="รหัสผ่าน">
+        <button class="login-btn" onclick="login()">เข้าสู่ระบบ</button>
+        <button class="register-btn" onclick="register()">ลงทะเบียน</button>
+        <button class="logout-btn" onclick="logout()" style="display:none;">ออกจากระบบ</button>
+    
+    <button class="google-login-btn" onclick="loginWithGoogle()">
+    <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google icon" />
+    เข้าสู่ระบบด้วย Google
+</button>
+</div>
+    <div id="gameArea"> <h1>เกมจับคู่พยัญชนะไทย</h1>
+        <div id="score">
+            คะแนนสะสม: <span id="totalScore">0</span> | ⏱ เหลือเวลา: <span id="timeLeft">60</span> วินาที
         </div>
+        <button id="startBtn" onclick="startGame()">เริ่มเกม</button>
+        <button id="restartBtn" onclick="restartGame()" style="display:none;">เล่นต่อ</button>
+
+        <div id="game"></div>
+
+        <div id="popup" style="display:none;">
+            <div id="popupBox">
+                <div id="popupText">🎉 คุณได้ 120 คะแนน!</div>
+                <button onclick="closePopup()">ตกลง</button>
+            </div>
+        </div>
+
+        <canvas id="confetti" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;"></canvas>
+
+        <audio id="hoverSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/hover.mp3"></audio>
+        <audio id="clickSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/click.mp3"></audio>
+        <audio id="wrongSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/wrong.mp3"></audio>
+        <audio id="gameoverSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/game-over.mp3"></audio>
+        <audio id="winSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/winning.mp3"></audio>
+        <audio id="coinSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/coin.mp3"></audio>
     </div>
-
-    <canvas id="confetti" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;"></canvas>
-
-    <audio id="hoverSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/hover.mp3"></audio>
-    <audio id="clickSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/click.mp3"></audio>
-    <audio id="wrongSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/wrong.mp3"></audio>
-    <audio id="gameoverSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/game-over.mp3"></audio>
-    <audio id="winSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/winning.mp3"></audio>
-    <audio id="coinSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/coin.mp3"></audio>
-
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+   
     <script>
+        //Login
+        /**
+ * ฟังก์ชันสำหรับเข้าสู่ระบบด้วย Google
+ */
+async function loginWithGoogle() {
+    // สร้าง Google Auth Provider
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    try {
+        // ใช้ signInWithPopup เพื่อเปิดหน้าต่าง Google Login
+        const result = await auth.signInWithPopup(provider);
+        // ผู้ใช้ที่ล็อกอินสำเร็จ
+        const user = result.user;
+        console.log('เข้าสู่ระบบด้วย Google สำเร็จ:', user);
+        
+        // onAuthStateChanged จะจัดการการอัปเดต UI โดยอัตโนมัติ
+    } catch (error) {
+        // จัดการข้อผิดพลาด
+        console.error('เข้าสู่ระบบด้วย Google ล้มเหลว:', error.message);
+        alert('เข้าสู่ระบบด้วย Google ล้มเหลว: ' + error.message);
+
+        // คุณอาจต้องการตรวจสอบโค้ด error เพิ่มเติม เช่น
+        // auth/popup-closed-by-user: ผู้ใช้ปิดหน้าต่าง popup ก่อนล็อกอิน
+        // auth/cancelled-popup-request: การร้องขอ popup ถูกยกเลิก (อาจเกิดจากการคลิกซ้ำ)
+        if (error.code === 'auth/popup-closed-by-user') {
+            console.log('ผู้ใช้ปิดหน้าต่าง Google Login.');
+        } else if (error.code === 'auth/cancelled-popup-request') {
+            console.log('การร้องขอ Google Login ถูกยกเลิก.');
+        }
+    }
+}
+
+        function updateAuthUI() {
+    const authContainer = document.getElementById('authContainer');
+    const authStatus = document.getElementById('authStatus');
+    const loginBtn = authContainer.querySelector('.login-btn');
+    const registerBtn = authContainer.querySelector('.register-btn');
+    const googleLoginBtn = authContainer.querySelector('.google-login-btn'); // **เพิ่มบรรทัดนี้**
+    const logoutBtn = authContainer.querySelector('.logout-btn');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const gameArea = document.getElementById('gameArea');
+
+    if (currentUser) {
+        // ถ้ามีผู้ใช้ล็อกอินอยู่
+        authStatus.textContent = `ยินดีต้อนรับ, ${currentUser.email}`;
+        loginBtn.style.display = 'none';
+        registerBtn.style.display = 'none';
+        emailInput.style.display = 'none';
+        passwordInput.style.display = 'none';
+        googleLoginBtn.style.display = 'none'; // **เพิ่มบรรทัดนี้: ซ่อนปุ่ม Google Login**
+        logoutBtn.style.display = 'inline-block';
+        gameArea.style.display = 'flex';
+    } else {
+        // ถ้ายังไม่มีผู้ใช้ล็อกอิน
+        authStatus.textContent = 'กรุณาเข้าสู่ระบบหรือลงทะเบียน';
+        loginBtn.style.display = 'inline-block';
+        registerBtn.style.display = 'inline-block';
+        emailInput.style.display = 'block';
+        passwordInput.style.display = 'block';
+        googleLoginBtn.style.display = 'flex'; // **เพิ่มบรรทัดนี้: แสดงปุ่ม Google Login**
+        logoutBtn.style.display = 'none';
+        gameArea.style.display = 'none';
+    }
+}
+// 0. Firebase Initialization
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA1DVvalDuthN0-pUwECByT7-Ur5uTlsEE",
+  authDomain: "thai-phairater.firebaseapp.com",
+  projectId: "thai-phairater",
+  storageBucket: "thai-phairater.firebasestorage.app",
+  messagingSenderId: "995255977727",
+  appId: "1:995255977727:web:c0c1170665a19ab5136eca"
+};
+
+// เริ่มต้น Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth(); // สำหรับ Firebase Authentication
+
+// ตัวแปรสำหรับเก็บข้อมูลผู้ใช้ที่ล็อกอินอยู่
+let currentUser = null;
+
+// --- Firebase Authentication Functions ---
+
+/**
+ * อัปเดต UI ตามสถานะการล็อกอินของผู้ใช้
+ */
+function updateAuthUI() {
+    const authContainer = document.getElementById('authContainer');
+    const authStatus = document.getElementById('authStatus');
+    const loginBtn = authContainer.querySelector('.login-btn');
+    const registerBtn = authContainer.querySelector('.register-btn');
+    const logoutBtn = authContainer.querySelector('.logout-btn');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const gameArea = document.getElementById('gameArea'); // ส่วนของเกม
+
+    if (currentUser) {
+        // ถ้ามีผู้ใช้ล็อกอินอยู่
+        authStatus.textContent = `ยินดีต้อนรับ, ${currentUser.email}`;
+        loginBtn.style.display = 'none';
+        registerBtn.style.display = 'none';
+        emailInput.style.display = 'none';
+        passwordInput.style.display = 'none';
+        logoutBtn.style.display = 'inline-block';
+        gameArea.style.display = 'flex'; // แสดงส่วนเกม
+    } else {
+        // ถ้ายังไม่มีผู้ใช้ล็อกอิน
+        authStatus.textContent = 'กรุณาเข้าสู่ระบบหรือลงทะเบียน';
+        loginBtn.style.display = 'inline-block';
+        registerBtn.style.display = 'inline-block';
+        emailInput.style.display = 'block';
+        passwordInput.style.display = 'block';
+        logoutBtn.style.display = 'none';
+        gameArea.style.display = 'none'; // ซ่อนส่วนเกม
+    }
+}
+
+/**
+ * ฟังก์ชันสำหรับลงทะเบียนผู้ใช้ใหม่ด้วยอีเมลและรหัสผ่าน
+ */
+async function register() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    if (!email || !password) {
+        alert('กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน');
+        return;
+    }
+
+    try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        console.log('ลงทะเบียนสำเร็จ:', userCredential.user);
+        
+        // onAuthStateChanged จะจัดการการอัปเดต UI โดยอัตโนมัติ
+    } catch (error) {
+        console.error('ลงทะเบียนล้มเหลว:', error.message);
+        alert('ลงทะเบียนล้มเหลว: ' + error.message);
+    }
+}
+
+/**
+ * ฟังก์ชันสำหรับเข้าสู่ระบบด้วยอีเมลและรหัสผ่าน
+ */
+async function login() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    if (!email || !password) {
+        alert('กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน');
+        return;
+    }
+
+    try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        console.log('เข้าสู่ระบบสำเร็จ:', userCredential.user);
+      
+        // onAuthStateChanged จะจัดการการอัปเดต UI โดยอัตโนมัติ
+    } catch (error) {
+        console.error('เข้าสู่ระบบล้มเหลว:', error.message);
+        alert('เข้าสู่ระบบล้มเหลว: ' + error.message);
+    }
+}
+
+/**
+ * ฟังก์ชันสำหรับออกจากระบบ
+ */
+async function logout() {
+    try {
+        await auth.signOut();
+        console.log('ออกจากระบบสำเร็จ');
+      
+        // onAuthStateChanged จะจัดการการอัปเดต UI โดยอัตโนมัติ
+        // รีเซ็ตสถานะเกมเมื่อออกจากระบบ
+        clearInterval(countdownInterval); // ถ้ามี
+        totalScore = 0; // ถ้ามี
+        document.getElementById("totalScore").textContent = 0; // ถ้ามี
+        document.getElementById("timeLeft").textContent = 60; // ถ้ามี
+        document.getElementById("game").innerHTML = ""; // ถ้ามี
+        // อาจจะต้องแสดงปุ่ม 'เริ่มเกม' อีกครั้ง หรือซ่อนปุ่ม 'เล่นต่อ'
+        document.getElementById("startBtn").style.display = "inline-block";
+        document.getElementById("restartBtn").style.display = "none";
+    } catch (error) {
+        console.error('ออกจากระบบล้มเหลว:', error.message);
+        alert('ออกจากระบบล้มเหลว: ' + error.message);
+    }
+}
+
+/**
+ * Listener สำหรับการเปลี่ยนแปลงสถานะการล็อกอิน
+ * ฟังก์ชันนี้จะถูกเรียกทุกครั้งที่สถานะของผู้ใช้เปลี่ยนแปลง (ล็อกอิน/ล็อกเอาต์)
+ */
+auth.onAuthStateChanged((user) => {
+    currentUser = user; // กำหนดค่า currentUser
+    updateAuthUI(); // อัปเดต UI
+    // คุณสามารถโหลดข้อมูลผู้ใช้ (เช่น คะแนนสูงสุด) ได้ที่นี่ หากมี
+    // if (user) {
+    //     loadUserScore(user.uid);
+    // }
+});
+
+// ตรวจสอบให้แน่ใจว่าส่วนของการเริ่มต้นเกมไม่ได้ถูกเรียกก่อนที่ผู้ใช้จะล็อกอิน
+// เช่น ลบ startGame() หรือ calculateCardSize() ที่เคยอยู่ใน window.onload ออก
+window.onload = () => {
+    // onAuthStateChanged จะถูกเรียกโดยอัตโนมัติเมื่อโหลดหน้า
+    // และจะเรียก updateAuthUI() เพื่อแสดงสถานะปัจจุบัน
+};
+        //
         /* JavaScript code will go here */
 
     // 1. Global Variables (ตัวแปรส่วนกลาง)
