@@ -1,494 +1,185 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>เกมจับคู่พยัญชนะไทย</title> <style>
-
-    /* CSS styles will go here */
-
-<styles>
-    html, body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        font-family: 'TH Sarabun New', sans-serif;
-        background: #e0f7fa;
-        text-align: center;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    body > *:not(#game) {
-        z-index: 2;
-    }
-
-    #game {
-        display: grid;
-        justify-content: center;
-        align-content: center;
-        margin: auto;
-        padding: 1vh;
-        gap: 10px;
-        max-height: 70vh;
-        max-width: 95vw;
-    }
-
-    .card {
-        background: #ffffff;
-        border-radius: 12px;
-        aspect-ratio: 1 / 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: clamp(16px, 4vw, 36px);
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        transition: transform 0.2s, background-color 0.2s;
-        cursor: pointer;
-    }
-
-    .card:hover {
-        background-color: #c8e6c9;
-        transform: scale(1.05);
-    }
-
-    .card.selected {
-        background-color: #ffccbc !important;
-        transform: scale(1.05);
-        pointer-events: none;
-        opacity: 0.6;
-        transition: background-color 0.4s, opacity 0.4s;
-    }
-
-    .card img {
-        width: 80%;
-        height: 80%;
-        object-fit: contain;
-        pointer-events: none;
-    }
-
-    /* Style for Popup */
-    #popup {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-    }
-
-    #popupBox {
-        background: #fff;
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        text-align: center;
-        font-size: 1.5em;
-    }
-
-    #popupBox button {
-        margin-top: 20px;
-        padding: 10px 20px;
-        font-size: 1em;
-        cursor: pointer;
-        background: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 5px;
-    }
-
-    /* Style for the effect (if you want one) */
-    .effect {
-        /* Add your desired effect styles here, e.g., an animation */
-        /* For example, a simple ripple effect */
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.7);
-        animation: ripple 0.8s forwards;
-        opacity: 0;
-    }
-
-    @keyframes ripple {
-        from {
-            transform: scale(0);
-            opacity: 1;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมจับคู่พยัญชนะไทย</title>
+    <style>
+        /* General Styles */
+        html, body {
+            margin: 0; padding: 0; height: 100%;
+            font-family: 'TH Sarabun New', sans-serif;
+            background: #e0f7fa; text-align: center;
+            box-sizing: border-box; overflow: hidden;
         }
-        to {
-            transform: scale(1);
-            opacity: 0;
+        /* Main Wrapper for Centering */
+        #main-wrapper {
+            display: flex; justify-content: center; align-items: center;
+            width: 100%; height: 100%;
         }
-    }
-    /* CSS สำหรับส่วน Login/Register/Status */
-    /* เพิ่ม CSS สำหรับปุ่ม Google Login */
-#authContainer button.google-login-btn {
-    background: #DB4437; /* สีแดงของ Google */
-    color: white;
-    margin-top: 10px; /* เพิ่มระยะห่างจากปุ่มเดิม */
-    display: flex; /* จัดให้ไอคอนและข้อความอยู่กึ่งกลาง */
-    align-items: center;
-    justify-content: center;
-    gap: 8px; /* ระยะห่างระหว่างไอคอนกับข้อความ */
-    width: calc(100% - 10px); /* ให้ปุ่มกว้างเท่ากับ input fields */
-}
-#authContainer button.google-login-btn img {
-    width: 20px;
-    height: 20px;
-    vertical-align: middle;
-}
-        #authContainer {
-            margin: 20px auto; /* จัดกึ่งกลาง */
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            max-width: 400px;
-            width: 90%;
-            background: #f9f9f9;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            text-align: center;
+        /* --- Top Navigation Bar --- */
+        #topBar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 70px;
+            background: #ffffff; z-index: 990; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: none; align-items: center; justify-content: space-between;
+            padding: 0 15px; box-sizing: border-box;
         }
-        #authContainer h2 {
-            margin-top: 0;
-            color: #333;
+        #profileSection, #progressSection, #statusSection {
+            display: flex; align-items: center; gap: 20px; flex: 1;
         }
-        #authContainer input {
-            width: calc(100% - 22px); /* ลบ padding+border ออก */
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box; /* สำคัญ: เพื่อให้ความกว้างรวม padding และ border */
-        }
-        #authContainer button {
-            padding: 10px 15px;
-            margin: 5px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-        }
-        #authContainer button.login-btn { background: #4CAF50; color: white; }
-        #authContainer button.register-btn { background: #008CBA; color: white; }
-        #authContainer button.logout-btn { background: #f44336; color: white; }
-
-        #authStatus {
-            margin-bottom: 15px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        /* ซ่อนส่วนเกมเมื่อยังไม่ได้ Login */
-        #gameArea {
-            display: none; /* ซ่อนตอนแรก */
-            flex-direction: column;
-            align-items: center;
+        #progressSection { justify-content: center; font-size: 2.2em; }
+        #statusSection { justify-content: flex-end; font-size: 1.8em; font-weight: bold; }
+        .trophy-icon { filter: grayscale(1); opacity: 0.5; transition: all 0.3s ease; }
+        .trophy-icon.earned { filter: grayscale(0); opacity: 1; transform: scale(1.1); }
+        #scoreDisplay, #livesDisplay { display: flex; align-items: center; gap: 8px; }
+        #timerContainer { width: 180px; height: 20px; background-color: #e9ecef; border-radius: 10px; overflow: hidden; border: 2px solid #d0d0d0; }
+        #timerFill { height: 100%; width: 100%; background-color: #28a745; border-radius: 8px; transition: width 0.5s linear, background-color 0.5s ease; }
+        /* --- Profile Icon & Sidebar --- */
+        #profileIconContainer { position: relative; cursor: pointer; display: none; }
+        #profileIconImg { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #sidebar { position: fixed; top: 0; left: 0; height: 100%; width: 280px; background: #ffffff; z-index: 1001; box-shadow: 4px 0 10px rgba(0,0,0,0.1); transform: translateX(-100%); transition: transform 0.3s ease-in-out; display: flex; flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box; }
+        #sidebar.open { transform: translateX(0); }
+        #sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; }
+        #sidebarProfileImg { width: 100px; height: 100px; border-radius: 50%; margin-top: 20px; margin-bottom: 15px; }
+        #sidebarUserName { font-size: 1.8em; font-weight: bold; color: #333; margin: 5px 0; }
+        #sidebarUserEmail { font-size: 1.2em; color: #666; margin-bottom: 30px; word-break: break-all; }
+        #sidebarCloseBtn { position: absolute; top: 10px; right: 15px; font-size: 2em; cursor: pointer; color: #999; }
+        #sidebarLogoutBtn { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; background: #f44336; color: white; width: 100%; }
+        /* --- Auth Container (Login Form) --- */
+        #authContainer { padding: 20px; border-radius: 8px; max-width: 400px; width: 90%; background: #f9f9f9; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; }
+        #authContainer h2 { margin-top: 0; color: #333; }
+        #authContainer input { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        #authContainer .buttons { display: flex; justify-content: space-between; gap: 10px; }
+        #authContainer button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; }
+        #authContainer .login-btn { background: #4CAF50; color: white; flex: 1; }
+        #authContainer .register-btn { background: #008CBA; color: white; flex: 1; }
+        #authContainer .google-login-btn { background: #DB4437; color: white; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+        #authContainer .google-login-btn img { width: 20px; height: 20px; }
+        /* --- Game Area --- */
+        #gameArea { display: none; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; height: 100%; padding: 80px 15px 15px 15px; box-sizing: border-box; }
+        #gameArea h1 { font-size: 2.5em; color: #00796b; margin: 0; }
+        #gameArea .controls { margin: 15px 0; }
+        #gameArea #startBtn, #gameArea #restartBtn { padding: 10px 25px; font-size: 1.2em; border: none; border-radius: 8px; color: white; background-color: #007bff; cursor: pointer; }
+        #gameArea #restartBtn { background-color: #28a745; }
+        #game { display: grid; justify-content: center; align-content: center; flex-grow: 1; width: 100%; gap: 10px; }
+        .card { background: #ffffff; border-radius: 8px; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; font-size: 2em; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: transform 0.2s; cursor: pointer; }
+        .card:hover { transform: scale(1.05); }
+        .card.selected { background-color: #ffccbc !important; transform: scale(1.05); pointer-events: none; opacity: 0.6; }
+        .card img { width: 80%; height: 80%; object-fit: contain; pointer-events: none; }
+        /* --- Popup --- */
+        #popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        #popupBox { background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); text-align: center; font-size: 1.5em; }
+        #popupBox button { margin-top: 20px; padding: 10px 20px; font-size: 1em; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px; }
+        /* --- Responsive Styles --- */
+        @media (max-width: 500px) {
+            #authContainer { width: 100%; max-width: 100%; height: 100%; border: none; border-radius: 0; box-shadow: none; display: flex; flex-direction: column; justify-content: center; }
+            #gameArea { padding: 75px 10px 10px 10px; }
+            #gameArea h1 { font-size: 2em; }
+            #gameArea .controls { margin: 10px 0; }
         }
     </style>
 </head>
 <body>
-   
-    <div id="authContainer">
-        <h2>เข้าสู่ระบบ / ลงทะเบียน</h2>
-        <div id="authStatus"></div>
-        <input type="email" id="email" placeholder="อีเมล">
-        <input type="password" id="password" placeholder="รหัสผ่าน">
-        <button class="login-btn" onclick="login()">เข้าสู่ระบบ</button>
-        <button class="register-btn" onclick="register()">ลงทะเบียน</button>
-        <button class="logout-btn" onclick="logout()" style="display:none;">ออกจากระบบ</button>
-    
-    <button class="google-login-btn" onclick="loginWithGoogle()">
-    <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google icon" />
-    เข้าสู่ระบบด้วย Google
-</button>
-</div>
-    <div id="gameArea"> <h1>เกมจับคู่พยัญชนะไทย</h1>
-        <div id="score">
-            คะแนนสะสม: <span id="totalScore">0</span> | ⏱ เหลือเวลา: <span id="timeLeft">60</span> วินาที
+    <div id="topBar">
+        <div id="profileSection">
+            <div id="profileIconContainer"><img id="profileIconImg" src="" alt="Profile"></div>
         </div>
-        <button id="startBtn" onclick="startGame()">เริ่มเกม</button>
-        <button id="restartBtn" onclick="restartGame()" style="display:none;">เล่นต่อ</button>
+        <div id="progressSection"></div>
+        <div id="statusSection">
+            <div id="scoreDisplay">💰 <span id="scoreValue">0</span></div>
+            <div id="livesDisplay">❤️❤️❤️</div>
+            <div id="timerContainer"><div id="timerFill"></div></div>
+        </div>
+    </div>
+    
+    <div id="sidebar-overlay"></div>
+    <div id="sidebar">
+        <span id="sidebarCloseBtn">&times;</span>
+        <img id="sidebarProfileImg" src="" alt="Profile">
+        <h2 id="sidebarUserName"></h2>
+        <p id="sidebarUserEmail"></p>
+        <button id="sidebarLogoutBtn">ออกจากระบบ</button>
+    </div>
 
-        <div id="game"></div>
+    <div id="main-wrapper">
+        <div id="authContainer">
+             <h2>เข้าสู่ระบบ / ลงทะเบียน</h2>
+            <input type="email" id="email" placeholder="อีเมล">
+            <input type="password" id="password" placeholder="รหัสผ่าน">
+            <div class="buttons">
+                <button class="login-btn" onclick="login()">เข้าสู่ระบบ</button>
+                <button class="register-btn" onclick="register()">ลงทะเบียน</button>
+            </div>
+            <button class="google-login-btn" onclick="loginWithGoogle()">
+                <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google icon" />
+                เข้าสู่ระบบด้วย Google
+            </button>
+        </div>
 
-        <div id="popup" style="display:none;">
-            <div id="popupBox">
-                <div id="popupText">🎉 คุณได้ 120 คะแนน!</div>
-                <button onclick="closePopup()">ตกลง</button>
+        <div id="gameArea">
+            <h1>เกมจับคู่พยัญชนะไทย</h1>
+            <div class="controls">
+                <button id="startBtn" onclick="startGame()">เริ่มเกม</button>
+                <button id="restartBtn" onclick="restartGame()" style="display:none;">เล่นต่อ</button>
+            </div>
+            <div id="game"></div>
+            <div id="popup">
+                <div id="popupBox">
+                    <div id="popupText"></div>
+                    <button onclick="closePopup()">ตกลง</button>
+                </div>
             </div>
         </div>
-
-        <canvas id="confetti" style="position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;"></canvas>
-
-        <audio id="hoverSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/hover.mp3"></audio>
-        <audio id="clickSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/click.mp3"></audio>
-        <audio id="wrongSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/wrong.mp3"></audio>
-        <audio id="gameoverSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/game-over.mp3"></audio>
-        <audio id="winSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/winning.mp3"></audio>
-        <audio id="coinSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/coin.mp3"></audio>
     </div>
+
+    <canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1001; pointer-events: none;"></canvas>
+
+    <audio id="hoverSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/hover.mp3"></audio>
+    <audio id="clickSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/click.mp3"></audio>
+    <audio id="wrongSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/wrong.mp3"></audio>
+    <audio id="gameoverSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/game-over.mp3"></audio>
+    <audio id="winSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/winning.mp3"></audio>
+    <audio id="coinSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/coin.mp3"></audio>
+
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-   
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
     <script>
-        //Login
-        /**
- * ฟังก์ชันสำหรับเข้าสู่ระบบด้วย Google
- */
-async function loginWithGoogle() {
-    // สร้าง Google Auth Provider
-    const provider = new firebase.auth.GoogleAuthProvider();
+    // --- Firebase Initialization ---
+    // ⚠️ โปรดใส่ค่า Firebase Config ที่ถูกต้องของคุณที่นี่
+    const firebaseConfig = {
+    apiKey: "AIzaSyA1DVvalDuthN0-pUwECByT7-Ur5uTlsEE",
+    authDomain: "thai-phairater.firebaseapp.com",
+    projectId: "thai-phairater",
+    storageBucket: "thai-phairater.firebasestorage.app",
+    messagingSenderId: "995255977727",
+    appId: "1:995255977727:web:c0c1170665a19ab5136eca"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    let currentUser = null;
 
-    try {
-        // ใช้ signInWithPopup เพื่อเปิดหน้าต่าง Google Login
-        const result = await auth.signInWithPopup(provider);
-        // ผู้ใช้ที่ล็อกอินสำเร็จ
-        const user = result.user;
-        console.log('เข้าสู่ระบบด้วย Google สำเร็จ:', user);
-        
-        // onAuthStateChanged จะจัดการการอัปเดต UI โดยอัตโนมัติ
-    } catch (error) {
-        // จัดการข้อผิดพลาด
-        console.error('เข้าสู่ระบบด้วย Google ล้มเหลว:', error.message);
-        alert('เข้าสู่ระบบด้วย Google ล้มเหลว: ' + error.message);
+    // --- DOM Elements ---
+    const mainWrapper = document.getElementById('main-wrapper'), authContainer = document.getElementById('authContainer'), gameArea = document.getElementById('gameArea'), gameGrid = document.getElementById('game'), topBar = document.getElementById('topBar'), restartBtn = document.getElementById('restartBtn'), popup = document.getElementById('popup'), popupText = document.getElementById('popupText'), profileIconContainer = document.getElementById('profileIconContainer'), profileIconImg = document.getElementById('profileIconImg'), sidebar = document.getElementById('sidebar'), sidebarOverlay = document.getElementById('sidebar-overlay'), sidebarCloseBtn = document.getElementById('sidebarCloseBtn'), sidebarProfileImg = document.getElementById('sidebarProfileImg'), sidebarUserName = document.getElementById('sidebarUserName'), sidebarUserEmail = document.getElementById('sidebarUserEmail'), sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn'), scoreValue = document.getElementById('scoreValue'), livesDisplay = document.getElementById('livesDisplay'), timerFill = document.getElementById('timerFill'), progressSection = document.getElementById('progressSection');
+    
+    // --- Game Logic Variables ---
+    let countdownInterval, selected = [], remainingChars = [];
+    const TOTAL_TIME = 60, LIVES = 3;
+    let totalScore = 0, lives = LIVES, timeLeft = TOTAL_TIME, completedLessons = 0;
+    
+    const CHARS_PER_ROUND = 12; // พยัญชนะ 12 ตัว (จะได้การ์ด 24 ใบ)
 
-        // คุณอาจต้องการตรวจสอบโค้ด error เพิ่มเติม เช่น
-        // auth/popup-closed-by-user: ผู้ใช้ปิดหน้าต่าง popup ก่อนล็อกอิน
-        // auth/cancelled-popup-request: การร้องขอ popup ถูกยกเลิก (อาจเกิดจากการคลิกซ้ำ)
-        if (error.code === 'auth/popup-closed-by-user') {
-            console.log('ผู้ใช้ปิดหน้าต่าง Google Login.');
-        } else if (error.code === 'auth/cancelled-popup-request') {
-            console.log('การร้องขอ Google Login ถูกยกเลิก.');
-        }
-    }
-}
-
-        function updateAuthUI() {
-    const authContainer = document.getElementById('authContainer');
-    const authStatus = document.getElementById('authStatus');
-    const loginBtn = authContainer.querySelector('.login-btn');
-    const registerBtn = authContainer.querySelector('.register-btn');
-    const googleLoginBtn = authContainer.querySelector('.google-login-btn'); // **เพิ่มบรรทัดนี้**
-    const logoutBtn = authContainer.querySelector('.logout-btn');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const gameArea = document.getElementById('gameArea');
-
-    if (currentUser) {
-        // ถ้ามีผู้ใช้ล็อกอินอยู่
-        authStatus.textContent = `ยินดีต้อนรับ, ${currentUser.email}`;
-        loginBtn.style.display = 'none';
-        registerBtn.style.display = 'none';
-        emailInput.style.display = 'none';
-        passwordInput.style.display = 'none';
-        googleLoginBtn.style.display = 'none'; // **เพิ่มบรรทัดนี้: ซ่อนปุ่ม Google Login**
-        logoutBtn.style.display = 'inline-block';
-        gameArea.style.display = 'flex';
-    } else {
-        // ถ้ายังไม่มีผู้ใช้ล็อกอิน
-        authStatus.textContent = 'กรุณาเข้าสู่ระบบหรือลงทะเบียน';
-        loginBtn.style.display = 'inline-block';
-        registerBtn.style.display = 'inline-block';
-        emailInput.style.display = 'block';
-        passwordInput.style.display = 'block';
-        googleLoginBtn.style.display = 'flex'; // **เพิ่มบรรทัดนี้: แสดงปุ่ม Google Login**
-        logoutBtn.style.display = 'none';
-        gameArea.style.display = 'none';
-    }
-}
-// 0. Firebase Initialization
-
-const firebaseConfig = {
-  apiKey: "AIzaSyA1DVvalDuthN0-pUwECByT7-Ur5uTlsEE",
-  authDomain: "thai-phairater.firebaseapp.com",
-  projectId: "thai-phairater",
-  storageBucket: "thai-phairater.firebasestorage.app",
-  messagingSenderId: "995255977727",
-  appId: "1:995255977727:web:c0c1170665a19ab5136eca"
-};
-
-// เริ่มต้น Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth(); // สำหรับ Firebase Authentication
-
-// ตัวแปรสำหรับเก็บข้อมูลผู้ใช้ที่ล็อกอินอยู่
-let currentUser = null;
-
-// --- Firebase Authentication Functions ---
-
-/**
- * อัปเดต UI ตามสถานะการล็อกอินของผู้ใช้
- */
-function updateAuthUI() {
-    const authContainer = document.getElementById('authContainer');
-    const authStatus = document.getElementById('authStatus');
-    const loginBtn = authContainer.querySelector('.login-btn');
-    const registerBtn = authContainer.querySelector('.register-btn');
-    const logoutBtn = authContainer.querySelector('.logout-btn');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const gameArea = document.getElementById('gameArea'); // ส่วนของเกม
-
-    if (currentUser) {
-        // ถ้ามีผู้ใช้ล็อกอินอยู่
-        authStatus.textContent = `ยินดีต้อนรับ, ${currentUser.email}`;
-        loginBtn.style.display = 'none';
-        registerBtn.style.display = 'none';
-        emailInput.style.display = 'none';
-        passwordInput.style.display = 'none';
-        logoutBtn.style.display = 'inline-block';
-        gameArea.style.display = 'flex'; // แสดงส่วนเกม
-    } else {
-        // ถ้ายังไม่มีผู้ใช้ล็อกอิน
-        authStatus.textContent = 'กรุณาเข้าสู่ระบบหรือลงทะเบียน';
-        loginBtn.style.display = 'inline-block';
-        registerBtn.style.display = 'inline-block';
-        emailInput.style.display = 'block';
-        passwordInput.style.display = 'block';
-        logoutBtn.style.display = 'none';
-        gameArea.style.display = 'none'; // ซ่อนส่วนเกม
-    }
-}
-
-/**
- * ฟังก์ชันสำหรับลงทะเบียนผู้ใช้ใหม่ด้วยอีเมลและรหัสผ่าน
- */
-async function register() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    if (!email || !password) {
-        alert('กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน');
-        return;
-    }
-
-    try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        console.log('ลงทะเบียนสำเร็จ:', userCredential.user);
-        
-        // onAuthStateChanged จะจัดการการอัปเดต UI โดยอัตโนมัติ
-    } catch (error) {
-        console.error('ลงทะเบียนล้มเหลว:', error.message);
-        alert('ลงทะเบียนล้มเหลว: ' + error.message);
-    }
-}
-
-/**
- * ฟังก์ชันสำหรับเข้าสู่ระบบด้วยอีเมลและรหัสผ่าน
- */
-async function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    if (!email || !password) {
-        alert('กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน');
-        return;
-    }
-
-    try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        console.log('เข้าสู่ระบบสำเร็จ:', userCredential.user);
-      
-        // onAuthStateChanged จะจัดการการอัปเดต UI โดยอัตโนมัติ
-    } catch (error) {
-        console.error('เข้าสู่ระบบล้มเหลว:', error.message);
-        alert('เข้าสู่ระบบล้มเหลว: ' + error.message);
-    }
-}
-
-/**
- * ฟังก์ชันสำหรับออกจากระบบ
- */
-async function logout() {
-    try {
-        await auth.signOut();
-        console.log('ออกจากระบบสำเร็จ');
-      
-        // onAuthStateChanged จะจัดการการอัปเดต UI โดยอัตโนมัติ
-        // รีเซ็ตสถานะเกมเมื่อออกจากระบบ
-        clearInterval(countdownInterval); // ถ้ามี
-        totalScore = 0; // ถ้ามี
-        document.getElementById("totalScore").textContent = 0; // ถ้ามี
-        document.getElementById("timeLeft").textContent = 60; // ถ้ามี
-        document.getElementById("game").innerHTML = ""; // ถ้ามี
-        // อาจจะต้องแสดงปุ่ม 'เริ่มเกม' อีกครั้ง หรือซ่อนปุ่ม 'เล่นต่อ'
-        document.getElementById("startBtn").style.display = "inline-block";
-        document.getElementById("restartBtn").style.display = "none";
-    } catch (error) {
-        console.error('ออกจากระบบล้มเหลว:', error.message);
-        alert('ออกจากระบบล้มเหลว: ' + error.message);
-    }
-}
-
-/**
- * Listener สำหรับการเปลี่ยนแปลงสถานะการล็อกอิน
- * ฟังก์ชันนี้จะถูกเรียกทุกครั้งที่สถานะของผู้ใช้เปลี่ยนแปลง (ล็อกอิน/ล็อกเอาต์)
- */
-auth.onAuthStateChanged((user) => {
-    currentUser = user; // กำหนดค่า currentUser
-    updateAuthUI(); // อัปเดต UI
-    // คุณสามารถโหลดข้อมูลผู้ใช้ (เช่น คะแนนสูงสุด) ได้ที่นี่ หากมี
-    // if (user) {
-    //     loadUserScore(user.uid);
-    // }
-});
-
-// ตรวจสอบให้แน่ใจว่าส่วนของการเริ่มต้นเกมไม่ได้ถูกเรียกก่อนที่ผู้ใช้จะล็อกอิน
-// เช่น ลบ startGame() หรือ calculateCardSize() ที่เคยอยู่ใน window.onload ออก
-window.onload = () => {
-    // onAuthStateChanged จะถูกเรียกโดยอัตโนมัติเมื่อโหลดหน้า
-    // และจะเรียก updateAuthUI() เพื่อแสดงสถานะปัจจุบัน
-};
-        //
-        /* JavaScript code will go here */
-
-    // 1. Global Variables (ตัวแปรส่วนกลาง)
-    let countdownInterval;
-    let timeLeft;
-    let startTime;
-    let selected = [];
-    let remainingChars = []; // พยัญชนะที่ยังไม่ได้ใช้ในรอบทั้งหมด
-    let totalScore = 0;
-
-    // 2. Audio Elements (องค์ประกอบเสียง)
-    const hoverSound = document.getElementById("hoverSound");
-    const clickSound = document.getElementById("clickSound");
-    const wrongSound = document.getElementById("wrongSound");
-    const gameoverSound = document.getElementById("gameoverSound");
-    const winSound = document.getElementById("winSound");
-    const coinSound = document.getElementById("coinSound");
-
-    // 3. Game Data (ข้อมูลเกม - พยัญชนะ)
+    const hoverSound = document.getElementById("hoverSound"), clickSound = document.getElementById("clickSound"), wrongSound = document.getElementById("wrongSound"), gameoverSound = document.getElementById("gameoverSound"), winSound = document.getElementById("winSound"), coinSound = document.getElementById("coinSound");
     const baseUrl = "https://raw.githubusercontent.com/Phairater/thai-sounds/main/";
+    const allCharIds = [ "ก", "ข", "ฃ", "ค", "ฅ", "ฆ", "ง", "จ", "ฉ", "ช", "ซ", "ฌ", "ญ", "ฎ", "ฏ", "ฐ", "ฑ", "ฒ", "ณ", "ด", "ต", "ถ", "ท", "ธ", "น", "บ", "ป", "ผ", "ฝ", "พ", "ฟ", "ภ", "ม", "ย", "ร", "ล", "ว", "ศ", "ษ", "ส", "ห", "ฬ", "อ", "ฮ"];
+    const allChars = allCharIds.map(id => ({ id: id, img: `${baseUrl}${id}.png`, sound: `${baseUrl}${id}.mp3` }));
+    const TOTAL_LESSONS = Math.ceil(allChars.length / CHARS_PER_ROUND);
 
-// เก็บแค่ id ของพยัญชนะ
-const charIds = [
-    "ก", "ข", "ฃ", "ค", "ฅ", "ฆ", "ง", "จ", "ฉ", "ช", "ซ", "ฌ", "ญ", "ฎ", "ฏ", "ฐ",
-    "ฑ", "ฒ", "ณ", "ด", "ต", "ถ", "ท", "ธ", "น", "บ", "ป", "ผ", "ฝ", "พ", "ฟ", "ภ",
-    "ม", "ย", "ร", "ล", "ว", "ศ", "ษ", "ส", "ห", "ฬ", "อ", "ฮ"
-];
-
-// สร้าง array ของ objects จาก charIds โดยใช้ .map()
-const chars = charIds.map(id => ({
-    id: id,
-    // แก้ไข: สำหรับ 'ง' และ 'ร' ที่เคยมี img เป็น .mp3 ควรเปลี่ยนเป็น .png
-    // คุณต้องตรวจสอบให้แน่ใจว่าไฟล์รูปภาพนั้นมีอยู่จริง
-    img: baseUrl + (id === "ง" || id === "ร" ? id + ".png" : id + ".png"), // สมมติว่าทุกตัวใช้ .png เป็นรูปภาพ
-    sound: baseUrl + id + ".mp3"
-}));
-
-// ตัวอย่างการใช้งาน (เหมือนเดิม)
-// console.log(chars[0].img); // จะได้: https://raw.githubusercontent.com/Phairater/thai-sounds/main/ก.png
-
-    // 4. Utility Functions (ฟังก์ชันตัวช่วย)
+    // --- Helper Functions ---
     function playAudio(audio) {
-        audio.pause();
         audio.currentTime = 0;
-        audio.play().catch(() => {}); // ป้องกัน error ถ้าเบราว์เซอร์บล็อกการเล่นเสียง
+        audio.play().catch(e => console.error("Audio play failed:", e));
     }
 
     function shuffle(array) {
@@ -498,217 +189,190 @@ const chars = charIds.map(id => ({
         }
         return array;
     }
+    
+    function calculateAndApplyLayout() {
+        if (!gameGrid || gameGrid.children.length === 0) return;
+        const numCards = gameGrid.children.length;
+        const gap = 10;
+        
+        const gameAreaStyle = window.getComputedStyle(gameArea);
+        const availableWidth = gameArea.clientWidth - (parseInt(gameAreaStyle.paddingLeft) + parseInt(gameAreaStyle.paddingRight));
+        
+        const h1 = gameArea.querySelector('h1');
+        const controls = gameArea.querySelector('.controls');
+        const topOffset = h1.offsetHeight + controls.offsetHeight;
+        const availableHeight = gameArea.clientHeight - topOffset - 20; // 20 for extra margin
+        
+        let bestLayout = { cols: 0, cardSize: 0 };
 
-    function calculateCardSize() {
-        const game = document.getElementById("game");
-        const padding = 10;
-        const cardCount = game.children.length; // นับจากการ์ดที่มีอยู่จริง
-        const containerWidth = window.innerWidth * 0.95;
-        const containerHeight = window.innerHeight * 0.7;
-
-        let bestCols = 1;
-        let bestSize = 0;
-
-        // ลองคำนวณหาจำนวนคอลัมน์และขนาดการ์ดที่เหมาะสมที่สุด
-        for (let cols = 1; cols <= cardCount; cols++) {
-            const rows = Math.ceil(cardCount / cols);
-            const cardWidth = Math.floor((containerWidth - padding * (cols - 1)) / cols);
-            const cardHeight = Math.floor((containerHeight - padding * (rows - 1)) / rows);
-            const size = Math.min(cardWidth, cardHeight);
-
-            const totalWidth = size * cols + padding * (cols - 1);
-            const totalHeight = size * rows + padding * (rows - 1);
-
-            if (totalWidth <= containerWidth && totalHeight <= containerHeight && size > bestSize) {
-                bestSize = size;
-                bestCols = cols;
+        for (let cols = 3; cols <= numCards / 2; cols++) {
+            if (numCards % cols !== 0 && cols > numCards / 2) continue;
+            const rows = Math.ceil(numCards / cols);
+            const sizeW = (availableWidth - (cols - 1) * gap) / cols;
+            const sizeH = (availableHeight - (rows - 1) * gap) / rows;
+            const cardSize = Math.floor(Math.min(sizeW, sizeH));
+            if (cardSize > bestLayout.cardSize) {
+                bestLayout = { cols, cardSize };
             }
         }
-
-        game.style.gridTemplateColumns = `repeat(${bestCols}, ${bestSize}px)`;
-        game.style.gridGap = `${padding}px`;
-
-        const cards = game.querySelectorAll('.card');
-        cards.forEach(card => {
-            card.style.width = `${bestSize}px`;
-            card.style.height = `${bestSize}px`;
-            card.style.fontSize = `${bestSize * 0.4}px`; // ปรับขนาดฟอนต์ตามขนาดการ์ด
-        });
-    }
-
-    function showEffect(div) {
-        const effect = document.createElement("div");
-        effect.className = "effect";
-        div.appendChild(effect);
-        setTimeout(() => div.removeChild(effect), 800);
+        
+        gameGrid.style.gridTemplateColumns = `repeat(${bestLayout.cols}, ${bestLayout.cardSize}px)`;
+        const cards = gameGrid.querySelectorAll('.card');
+        cards.forEach(card => card.style.fontSize = `${bestLayout.cardSize * 0.5}px`);
     }
 
     function showPopup(msg, withConfetti = false) {
-        document.getElementById("popupText").innerHTML = msg;
-        document.getElementById("popup").style.display = "flex";
-        if (withConfetti) launchConfetti();
-    }
-
-    function closePopup() {
-        document.getElementById("popup").style.display = "none";
-    }
-
-    function launchConfetti() {
-        const canvas = document.getElementById('confetti');
-        if (!canvas) { // ตรวจสอบว่ามี canvas หรือไม่
-            console.error("Confetti canvas not found!");
-            return;
+        popupText.innerHTML = msg;
+        popup.style.display = "flex";
+        if (withConfetti && typeof confetti === 'function') {
+            const myConfetti = confetti.create(document.getElementById('confetti-canvas'), { resize: true, useWorker: true });
+            myConfetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
         }
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        let particles = [];
-        for (let i = 0; i < 150; i++) {
-            particles.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height - canvas.height,
-                r: Math.random() * 6 + 4,
-                c: `hsl(${Math.random()*360}, 100%, 60%)`,
-                v: Math.random() * 4 + 2
-            });
+    }
+    function closePopup() { popup.style.display = "none"; }
+
+    // --- UI Update Functions ---
+    function updateLivesDisplay() { livesDisplay.innerHTML = '❤️'.repeat(lives) + '💔'.repeat(LIVES - lives); }
+    function updateTrophyDisplay() {
+        progressSection.innerHTML = '';
+        for (let i = 1; i <= TOTAL_LESSONS; i++) {
+            const trophy = document.createElement('span');
+            trophy.className = 'trophy-icon';
+            if (i <= completedLessons) trophy.classList.add('earned');
+            trophy.textContent = '🏆';
+            progressSection.appendChild(trophy);
         }
-        let animation = setInterval(() => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => {
-                p.y += p.v;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                ctx.fillStyle = p.c;
-                ctx.fill();
-            });
-            // หยุด animation เมื่ออนุภาคหลุดจากจอทั้งหมด
-            if (particles.every(p => p.y > canvas.height)) {
-                clearInterval(animation);
-                ctx.clearRect(0, 0, canvas.width, canvas.height); // ล้าง confetti ออกจากจอ
-            }
-        }, 30);
+    }
+    function updateTimerBar() {
+        const percentage = (timeLeft / TOTAL_TIME) * 100;
+        timerFill.style.width = `${percentage}%`;
+        if (percentage <= 25) timerFill.style.backgroundColor = '#dc3545';
+        else if (percentage <= 50) timerFill.style.backgroundColor = '#ffc107';
+        else timerFill.style.backgroundColor = '#28a745';
     }
 
-    // 5. Game Logic Functions (ฟังก์ชันตรรกะเกม)
+    function initializeGameUI() {
+        scoreValue.textContent = totalScore;
+        timeLeft = TOTAL_TIME;
+        updateLivesDisplay();
+        updateTrophyDisplay();
+        updateTimerBar();
+    }
+    
+    function resetGame() {
+        clearInterval(countdownInterval);
+        totalScore = 0; lives = LIVES; completedLessons = 0;
+        gameGrid.innerHTML = "";
+        document.getElementById("startBtn").style.display = "inline-block";
+        restartBtn.style.display = "none";
+        initializeGameUI();
+    }
+
+    // --- Core Game Flow ---
     function startGame() {
         document.getElementById("startBtn").style.display = "none";
-        document.getElementById("restartBtn").style.display = "inline-block";
-        totalScore = 0;
-        document.getElementById("totalScore").textContent = 0;
-        remainingChars = shuffle([...chars]); // เริ่มต้นด้วยพยัญชนะทั้งหมด
+        restartBtn.style.display = "inline-block";
+        restartBtn.textContent = "เล่นต่อ";
+        totalScore = 0; lives = LIVES; completedLessons = 0;
+        initializeGameUI();
+        remainingChars = shuffle([...allChars]);
         startRound();
+    }
+    function restartGame() {
+        closePopup();
+        startGame();
     }
 
     function startRound() {
-        clearInterval(countdownInterval); // หยุดนับถอยหลังรอบที่แล้ว
-        timeLeft = 60;
-        document.getElementById("timeLeft").textContent = timeLeft;
+        clearInterval(countdownInterval);
+        timeLeft = TOTAL_TIME;
+        updateTimerBar();
+
         countdownInterval = setInterval(() => {
-            timeLeft--;
-            document.getElementById("timeLeft").textContent = timeLeft;
-            if (timeLeft <= 0) {
+            if (--timeLeft <= 0) {
                 clearInterval(countdownInterval);
+                lives--;
+                updateLivesDisplay();
                 playAudio(gameoverSound);
-                showPopup("⏱ หมดเวลา! กรุณากด ' เล่นต่อ ' เพื่อเล่นอีกครั้ง", false);
+                if (lives > 0) {
+                    showPopup(`⏱ หมดเวลา! เสีย 1 ชีวิต! <br>เริ่มด่านใหม่...`, false);
+                    setTimeout(() => { closePopup(); startRound(); }, 2500);
+                } else {
+                    showPopup("💔 ชีวิตหมด! เกมจบแล้ว", false);
+                    restartBtn.textContent = "เริ่มเกมใหม่";
+                }
             }
+            updateTimerBar();
         }, 1000);
 
-        const game = document.getElementById("game");
-        game.innerHTML = ""; // ล้างการ์ดเดิม
-        selected = []; // รีเซ็ตการ์ดที่ถูกเลือก
-
-        const roundCount = Math.min(12, remainingChars.length); // จำนวนคู่การ์ดในรอบนี้
-        // ใช้ splice เพื่อ "ตัด" พยัญชนะออกจาก remainingChars สำหรับรอบนี้
-        const roundChars = remainingChars.splice(0, roundCount);
-
-        let cards = [];
+        gameGrid.innerHTML = "";
+        selected = [];
+        const roundChars = remainingChars.splice(0, CHARS_PER_ROUND);
+        if (roundChars.length === 0) return;
+        
+        let cardsData = [];
         roundChars.forEach(char => {
-            cards.push({ type: 'char', id: char.id, sound: char.sound });
-            cards.push({ type: 'img', id: char.id, img: char.img, sound: char.sound });
+            cardsData.push({ type: 'char', id: char.id, sound: char.sound });
+            cardsData.push({ type: 'img', id: char.id, img: char.img, sound: char.sound });
         });
-
-        shuffle(cards); // สุ่มลำดับการ์ดในรอบนี้
-
-        cards.forEach((card, index) => {
-            const div = document.createElement("div");
-            div.classList.add("card");
-            div.dataset.index = index;
-            div.dataset.id = card.id;
-            div.dataset.type = card.type;
-
-            if (card.type === 'char') {
-                div.textContent = card.id;
-            } else {
+        
+        shuffle(cardsData).forEach(cardData => {
+            const cardDiv = document.createElement("div");
+            cardDiv.classList.add("card");
+            cardDiv.dataset.id = cardData.id;
+            
+            if (cardData.type === 'char') cardDiv.textContent = cardData.id;
+            else {
                 const img = document.createElement("img");
-                img.src = card.img;
-                div.appendChild(img);
+                img.src = cardData.img;
+                img.alt = cardData.id;
+                cardDiv.appendChild(img);
             }
-
-            div.onclick = () => selectCard(div, card);
-            div.onmouseenter = () => playAudio(hoverSound);
-            game.appendChild(div);
+            cardDiv.onclick = () => selectCard(cardDiv, cardData);
+            cardDiv.onmouseenter = () => playAudio(hoverSound);
+            gameGrid.appendChild(cardDiv);
         });
-
-        calculateCardSize(); // ปรับขนาดการ์ดตามจำนวนใหม่
-    }
-
-    function restartGame() {
-        closePopup();
-        clearInterval(countdownInterval);
-        totalScore = 0; // รีเซ็ตคะแนนรวมใหม่
-        document.getElementById("totalScore").textContent = totalScore;
-        document.getElementById("game").innerHTML = ""; // ล้างการ์ดทั้งหมด
-        remainingChars = shuffle([...chars]); // รีเซ็ตพยัญชนะทั้งหมดและสุ่มใหม่สำหรับเกมใหม่
-        startRound();
+        
+        requestAnimationFrame(calculateAndApplyLayout);
     }
 
     function selectCard(div, card) {
-        if (selected.length >= 2 || div.classList.contains("selected")) return;
-
+        if (selected.length >= 2 || div.classList.contains("selected") || timeLeft <= 0) return;
+        
         div.classList.add("selected");
         playAudio(clickSound);
-        selected.push({ div, id: card.id, sound: card.sound });
+        selected.push({ div, id: card.id, soundUrl: card.sound });
 
         if (selected.length === 2) {
             const [first, second] = selected;
-            if (first.id === second.id) { // จับคู่ถูก
-                new Audio(first.sound).play().catch(() => {});
+            if (first.id === second.id) {
                 playAudio(coinSound);
-                showEffect(first.div);
-                showEffect(second.div);
+                new Audio(first.soundUrl).play();
                 totalScore += 10;
-                document.getElementById("totalScore").textContent = totalScore;
-
+                scoreValue.textContent = totalScore;
+                
                 setTimeout(() => {
-                    // เปลี่ยนจาก style.visibility = "hidden" เป็นการลบออกจาก DOM
-                    first.div.remove(); // ลบการ์ดใบแรกออกจาก DOM
-                    second.div.remove(); // ลบการ์ดใบที่สองออกจาก DOM
-
+                    first.div.remove();  // <-- แก้ไขตรงนี้
+                    second.div.remove(); // <-- และตรงนี้
                     selected = [];
 
-                    // เนื่องจากลบการ์ดไปแล้ว, จำนวนการ์ดใน game div จะลดลง
-                    // คุณอาจจะต้องเรียก calculateCardSize() อีกครั้ง เพื่อให้ grid คำนวณใหม่และจัดเรียงการ์ด
-                    calculateCardSize(); // สำคัญ: เรียกฟังก์ชันนี้อีกครั้งเพื่อปรับ layout
-
-                    // ตรวจสอบว่าการ์ดในรอบนี้ทั้งหมดถูกจับคู่ครบหรือยัง
-                    // ตอนนี้เช็คจาก children ที่เหลืออยู่
-                    if (document.getElementById("game").children.length === 0) {
-                        setTimeout(() => {
-                            if (remainingChars.length > 0) {
-                                startRound(); // เริ่มรอบใหม่ ถ้ายังมีพยัญชนะเหลือ
-                            } else {
-                                // ถ้าไม่มีพยัญชนะเหลือแล้ว เกมจบสมบูรณ์
-                                clearInterval(countdownInterval); // หยุดนับถอยหลังเมื่อเกมจบ
-                                showPopup(`🎊 เกมจบแล้ว! คุณสะสมได้ทั้งหมด ${totalScore} คะแนน!`, true);
-                                playAudio(winSound); // เล่นเสียงชนะ
-                            }
-                        }, 500);
+                    if (Array.from(gameGrid.children).every(c => c.style.visibility === 'hidden')) {
+                        completedLessons++;
+                        updateTrophyDisplay();
+                        if (remainingChars.length > 0) {
+                            setTimeout(startRound, 800);
+                        } else {
+                            clearInterval(countdownInterval);
+                            playAudio(winSound);
+                            showPopup(`🎊 ยอดเยี่ยม! คุณเคลียร์เกมได้สำเร็จ!<br>คะแนนรวม: ${totalScore}`, true);
+                            restartBtn.textContent = "เริ่มเกมใหม่";
+                        }
                     }
                 }, 600);
-            } else { // จับคู่ผิด
+            } else {
                 playAudio(wrongSound);
-                totalScore = Math.max(0, totalScore - 5); // หักคะแนน ไม่ให้ต่ำกว่า 0
-                document.getElementById("totalScore").textContent = totalScore;
+                totalScore = Math.max(0, totalScore - 5);
+                scoreValue.textContent = totalScore;
                 setTimeout(() => {
                     first.div.classList.remove("selected");
                     second.div.classList.remove("selected");
@@ -717,16 +381,66 @@ const chars = charIds.map(id => ({
             }
         }
     }
+    
+    // --- Auth Functions & Listeners ---
+    function updateAuthUI() {
+        if (currentUser) {
+            mainWrapper.style.alignItems = 'flex-start';
+            authContainer.style.display = 'none';
+            gameArea.style.display = 'flex';
+            topBar.style.display = 'flex';
+            profileIconContainer.style.display = 'block';
 
-    // 6. Initialization (การเริ่มต้น)
-    window.addEventListener("resize", calculateCardSize); // ปรับขนาดการ์ดเมื่อหน้าจอเปลี่ยน
-    window.onload = () => {
-        // อาจเรียก calculateCardSize() ที่นี่ หากต้องการจัด layout ตั้งแต่แรก
-        // แต่เนื่องจาก startRound() จะเรียกอยู่แล้ว อาจไม่จำเป็นต้องเรียกซ้ำ
-    };
+            const photoURL = currentUser.photoURL || 'https://i.imgur.com/sC22S2A.png';
+            const displayName = currentUser.displayName || currentUser.email.split('@')[0];
 
-    // หมายเหตุ: ฟังก์ชัน calculateOptimalGrid ถูกซ้ำซ้อนและไม่ถูกเรียกใช้ ควรลบออก
+            profileIconImg.src = photoURL;
+            sidebarProfileImg.src = photoURL;
+            sidebarUserName.textContent = displayName;
+            sidebarUserEmail.textContent = currentUser.email;
+            initializeGameUI();
+        } else {
+            mainWrapper.style.alignItems = 'center';
+            authContainer.style.display = 'block';
+            gameArea.style.display = 'none';
+            topBar.style.display = 'none';
+            profileIconContainer.style.display = 'none';
+            closeSidebar();
+        }
+    }
+    function openSidebar() { sidebar.classList.add('open'); sidebarOverlay.style.display = 'block'; }
+    function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.style.display = 'none'; }
+    
+    async function register() {
+        const email = document.getElementById('email').value, password = document.getElementById('password').value;
+        if (!email || !password) return alert('กรุณากรอกอีเมลและรหัสผ่าน');
+        try { await auth.createUserWithEmailAndPassword(email, password); }
+        catch (error) { alert('ลงทะเบียนล้มเหลว: ' + error.message); }
+    }
+    async function login() {
+        const email = document.getElementById('email').value, password = document.getElementById('password').value;
+        if (!email || !password) return alert('กรุณากรอกอีเมลและรหัสผ่าน');
+        try { await auth.signInWithEmailAndPassword(email, password); }
+        catch (error) { alert('เข้าสู่ระบบล้มเหลว: ' + error.message); }
+    }
+    async function loginWithGoogle() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        try { await auth.signInWithPopup(provider); }
+        catch (error) { alert('เข้าสู่ระบบด้วย Google ล้มเหลว: ' + error.message); }
+    }
+    async function logout() {
+        try {
+            await auth.signOut();
+            resetGame();
+        } catch (error) { alert('ออกจากระบบล้มเหลว: ' + error.message); }
+    }
 
+    auth.onAuthStateChanged((user) => { currentUser = user; updateAuthUI(); });
+    profileIconContainer.onclick = openSidebar;
+    sidebarOverlay.onclick = closeSidebar;
+    sidebarCloseBtn.onclick = closeSidebar;
+    sidebarLogoutBtn.onclick = logout;
+    window.addEventListener("resize", calculateAndApplyLayout);
     </script>
 </body>
 </html>
