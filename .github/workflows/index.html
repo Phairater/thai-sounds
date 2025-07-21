@@ -2,17 +2,23 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="google-apps-script-meta-features" content="viewport-meta-tag=true">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
     <title>เกมจับคู่พยัญชนะไทย</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Taviraj:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=TH+Sarabun+New:wght@400;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
+        :root {
+            --primary-color: #4285F4;
+            --secondary-color: #34A853;
+            --base-font-size: 16px; 
+        }
+
         /* --- General Styles --- */
         html, body {
             margin: 0;
@@ -21,11 +27,7 @@
             min-height: 100vh;
             box-sizing: border-box;
             overflow: hidden;
-        }
-
-        /* --- Game Area & Original App Styles --- */
-        #gameArea, #topBar, #sidebar {
-            font-family: 'TH Sarabun New', sans-serif;
+            font-size: var(--base-font-size);
         }
         
         #main-wrapper {
@@ -33,12 +35,16 @@
             height: calc(var(--vh, 1vh) * 100);
             transition: padding 0.3s ease;
         }
-        
-        body {
-             background: #e0f7fa; /* Fallback background for the game */
+
+        /* --- Game Area & Original App Styles --- */
+        #gameArea, #topBar, #sidebar {
+            font-family: 'TH Sarabun New', sans-serif;
         }
         
-        /* --- Top Navigation Bar --- */
+        body {
+            background: #e0f7fa;
+        }
+        
         #topBar {
             position: fixed; top: 0; left: 0; width: 100%; height: 70px;
             background: #ffffff; z-index: 990; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
@@ -51,10 +57,28 @@
         .trophy-icon { filter: grayscale(1); opacity: 0.5; transition: all 0.3s ease; }
         .trophy-icon.earned { filter: grayscale(0); opacity: 1; transform: scale(1.1); }
         #scoreDisplay, #livesDisplay { display: flex; align-items: center; gap: 8px; }
-        #timerContainer { width: 180px; height: 20px; background-color: #e9ecef; border-radius: 10px; overflow: hidden; border: 2px solid #d0d0d0; }
-        #timerFill { height: 100%; width: 100%; background-color: #28a745; border-radius: 8px; transition: width 0.5s linear, background-color 0.5s ease; }
         
-        /* --- Profile Icon & Sidebar --- */
+        /* --- ✨ START: CSS ที่ปรับปรุงแล้ว --- */
+        #timerContainer {
+            position: absolute;      /* ทำให้ลอยอยู่เหนือ topBar */
+            bottom: 0;               /* จัดให้อยู่ขอบล่าง */
+            left: 0;                 /* จัดให้อยู่ขอบซ้าย */
+            width: 100%;             /* ความกว้างเต็ม 100% */
+            height: 6px;             /* ปรับความสูงให้เหมาะสม */
+            background-color: #e9ecef; /* สีพื้นหลังของแถบเวลาที่ยังไม่เต็ม */
+            border-radius: 0;        /* ไม่ต้องมีขอบมน */
+            border: none;            /* ไม่ต้องมีเส้นขอบ */
+            overflow: hidden;        /* ซ่อนส่วนที่เกิน */
+        }
+        #timerFill {
+            height: 100%;
+            width: 100%;
+            background-color: #28a745;
+            border-radius: 0; /* ไม่ต้องมีขอบมน */
+            transition: width 0.5s linear, background-color 0.5s ease;
+        }
+        /* --- ✨ END: CSS ที่ปรับปรุงแล้ว --- */
+        
         #profileIconContainer { position: relative; cursor: pointer; display: none; }
         #profileIconImg { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         #sidebar { position: fixed; top: 0; left: 0; height: 100%; width: 280px; background: #ffffff; z-index: 1001; box-shadow: 4px 0 10px rgba(0,0,0,0.1); transform: translateX(-100%); transition: transform 0.3s ease-in-out; display: flex; flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box; }
@@ -66,135 +90,137 @@
         #sidebarCloseBtn { position: absolute; top: 10px; right: 15px; font-size: 2em; cursor: pointer; color: #999; }
         #sidebarLogoutBtn { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; background: #f44336; color: white; width: 100%; }
 
-        /* --- Auth Container (LOGIN FORM STYLES) --- */
+        /* --- ✨ AUTH CONTAINER STYLES --- */
         #authContainer {
             width: 100%;
             height: 100%;
-            font-family: "Roboto", sans-serif;
-            background-color: #f8fafb;
-            display: none; /* Controlled by JS */
-            overflow-y: auto; /* Allow scrolling on small screens */
+            display: none; 
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #f8f9fa;
         }
-        #authContainer p { color: #b3b3b3; font-weight: 300; }
-        #authContainer h3 { font-family: "Roboto", sans-serif; font-weight: 700; }
-        #authContainer a { transition: .3s all ease; }
-        #authContainer a:hover { text-decoration: none !important; }
-        .half, .half .container > .row { height: 100vh; }
 
-        .half .contents, .half .bg { width: 50%; }
-        
-        .half .contents .form-group {
-            border: 1px solid #efefef;
-            padding: 15px 20px;
-            border-radius: 30px;
-            position: relative;
-        }
-        .half .contents .form-group label {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            left: 20px;
-            font-size: 14px;
-            color: #b3b3b3;
-            transition: .3s all ease;
-        }
-        .half .contents .form-group input {
-            border: none;
-            background: transparent;
-        }
-        .half .contents .form-group.first {
-            border-top-left-radius: 30px;
-            border-top-right-radius: 30px;
-        }
-        .half .contents .form-group.last {
-            border-bottom-left-radius: 30px;
-            border-bottom-right-radius: 30px;
-            border-top: none;
-        }
-        .half .contents .form-control {
-            border: none;
-            padding: 0;
-            font-size: 14px;
-            border-radius: 0;
-        }
-        .half .contents .form-control:active, .half .contents .form-control:focus {
-            outline: none;
-            box-shadow: none;
-        }
-        .half .bg {
-            background-size: cover;
-            background-position: center;
-        }
-        .half a { color: #888; text-decoration: underline; }
-        .half .btn {
-            height: 54px;
-            padding-left: 30px;
-            padding-right: 30px;
-            border-radius: 30px;
-            font-size: 1rem;
-        }
-        .half .forgot-pass {
-            position: relative;
-            top: 2px;
-            font-size: 14px;
-        }
-        .btn-google {
-            background: #DB4437;
-            color: white;
+        .login-content {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            padding: 1.25rem;
+            height: 100%;
         }
-        .btn-google:hover {
-            color: white;
-            opacity: 0.9;
+        
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            padding: 1.875rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .btn-google img {
-            width: 20px;
-            height: 20px;
+        
+        .form-control-lg {
+            font-size: 1rem;
+            padding: 0.9375rem;
+            height: 3.125rem;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
         }
 
-        /* --- Game Area --- */
+        .action-btn {
+            border: none;
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+        
+        .google-btn {
+            background-color: white;
+            color: #333;
+            border: 1px solid #dadce0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.625rem;
+        }
+
+        .google-btn:hover { background-color: #f8f9fa; }
+        .google-icon { width: 1.25rem; height: 1.25rem; }
+        
+        /* Tab Styling */
+        .nav-tabs .nav-link {
+            color: #6c757d;
+            font-weight: 500;
+        }
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            border-color: var(--primary-color) var(--primary-color) #fff;
+            border-bottom-width: 2px;
+        }
+        
+        /* 📱 Responsive Styles for Portrait (Mobile) */
+        @media (orientation: portrait) {
+            html {
+                font-size: calc(var(--base-font-size) * 2.5); /* Adjusted for better fit with tabs */
+            }
+            .login-form {
+                max-width: 90%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                padding: 2rem;
+                border-radius: 0;
+                box-shadow: none;
+            }
+            .login-content { padding: 0; }
+        }
+        
+        /* 💻 Responsive Styles for Landscape */
+        @media (orientation: landscape) {
+            .login-form { max-width: 400px; }
+        }
+
+        /* --- Game Area & Popup (Unchanged) --- */
         #gameArea { display: none; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; height: 100%; padding: 80px 15px 15px 15px; box-sizing: border-box; }
         #gameArea h1 { font-size: 2.5em; color: #00796b; margin: 0; }
         #gameArea .controls { margin: 15px 0; }
         #gameArea #startBtn, #gameArea #restartBtn { padding: 10px 25px; font-size: 1.2em; border: none; border-radius: 8px; color: white; background-color: #007bff; cursor: pointer; }
         #gameArea #restartBtn { background-color: #28a745; }
         #game { display: grid; justify-content: center; align-content: center; flex-grow: 1; width: 100%; gap: 10px; }
-        .card { background: #ffffff; border-radius: 8px; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; font-size: 2em; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: transform 0.2s; cursor: pointer; }
-        .card:hover { transform: scale(1.05); }
-        .card.selected { background-color: #ffccbc !important; transform: scale(1.05); pointer-events: none; opacity: 0.6; }
-        .card img { width: 80%; height: 80%; object-fit: contain; pointer-events: none; }
         
-        /* --- Popup --- */
+        /* ✅ CSS ที่แก้ไขแล้ว */
+        .card { 
+            background: #ffffff; 
+            border-radius: 8px; 
+            aspect-ratio: 1 / 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 2em; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15); 
+            transition: transform 0.4s ease, opacity 0.4s ease; /* เพิ่ม opacity และปรับเวลา */
+            cursor: pointer; 
+        }
+        .card.matched {
+            transform: scale(0);
+            opacity: 0;
+            cursor: default;
+        }
+        .card:hover { 
+            transform: scale(1.05); 
+        }
+        .card.selected { 
+            background-color: #ffccbc !important; 
+            transform: scale(1.05); 
+            pointer-events: none; 
+            opacity: 0.6; 
+        }
+
+        .card img { width: 80%; height: 80%; object-fit: contain; pointer-events: none; }
         #popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
         #popupBox { background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); text-align: center; font-size: 1.5em; }
         #popupBox button { margin-top: 20px; padding: 10px 20px; font-size: 1em; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px; }
-
-        /* --- ✅ Responsive Styles for Mobile (Corrected) --- */
-        @media (max-width: 991.98px) {
-            .half, .half .container > .row {
-                height: auto; /* ปรับความสูงอัตโนมัติตามเนื้อหา */
-            }
-            .half .bg {
-                height: 200px; /* กำหนดความสูงรูปภาพด้านบน */
-            }
-            .half .contents, .half .bg {
-                width: 100%; /* ทำให้เต็มความกว้าง */
-            }
-            /* * ยกเลิกการจัดกึ่งกลางแนวตั้งของ Bootstrap (align-items-center)
-             * เพื่อให้ฟอร์มเริ่มต่อจากรูปภาพด้านบนเลย 
-            */
-            .half .contents .row {
-                min-height: auto;
-                align-items: flex-start !important;
-            }
-            .half .contents .col-md-7 {
-                padding-top: 40px; /* เพิ่มระยะห่างด้านบนของฟอร์ม */
-                padding-bottom: 40px; /* เพิ่มระยะห่างด้านล่าง */
-            }
-        }
     </style>
 </head>
 <body>
@@ -221,44 +247,57 @@
     <div id="main-wrapper">
         
         <div id="authContainer">
-             <div class="d-lg-flex half">
-                <div class="bg order-1 order-md-2" style="background-image: url('https://preview.colorlib.com/theme/bootstrap/login-form-05/images/bg_1.jpg');"></div>
-                <div class="contents order-2 order-md-1">
-                  <div class="container">
-                    <div class="row align-items-center justify-content-center">
-                      <div class="col-md-7">
-                        <h3>เข้าสู่ระบบเกม <strong>จับคู่พยัญชนะ</strong></h3>
-                        <p class="mb-4">กรุณากรอกอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบ หรือลงทะเบียนใหม่</p>
-                        
-                        <form onsubmit="event.preventDefault();">
-                          <div class="form-group first">
-                            <label for="email">อีเมล</label>
-                            <input type="email" class="form-control" placeholder="your-email@gmail.com" id="email">
-                          </div>
-                          <div class="form-group last mb-3">
-                            <label for="password">รหัสผ่าน</label>
-                            <input type="password" class="form-control" placeholder="Your Password" id="password">
-                          </div>
-                          
-                          <div class="d-flex mb-4 align-items-center">
-                            <span class="ml-auto"><a href="#" class="forgot-pass" onclick="alert('ฟังก์ชันนี้ยังไม่เปิดใช้งาน')">ลืมรหัสผ่าน?</a></span> 
-                          </div>
-
-                          <button type="button" onclick="login()" class="btn btn-block btn-primary">เข้าสู่ระบบ</button>
-                          <button type="button" onclick="register()" class="btn btn-block btn-info mt-2">ลงทะเบียน</button>
-                          
-                          <span class="d-block text-center my-4 text-muted">&mdash; หรือ &mdash;</span>
-
-                          <button type="button" onclick="loginWithGoogle()" class="btn btn-block btn-google">
-                              <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google icon" />
-                              เข้าสู่ระบบด้วย Google
-                          </button>
-                        </form>
-                      </div>
+            <div class="login-content">
+                <div class="login-form">
+                    <ul class="nav nav-tabs nav-fill mb-4" id="authTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-pane" type="button" role="tab" aria-controls="login-pane" aria-selected="true">เข้าสู่ระบบ</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register-pane" type="button" role="tab" aria-controls="register-pane" aria-selected="false">ลงทะเบียน</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="authTabContent">
+                        <div class="tab-pane fade show active" id="login-pane" role="tabpanel" aria-labelledby="login-tab" tabindex="0">
+                            <form onsubmit="event.preventDefault(); login();">
+                                <div class="mb-3">
+                                    <input type="email" class="form-control form-control-lg" id="login-email" placeholder="อีเมล" required>
+                                </div>
+                                <div class="mb-4">
+                                    <input type="password" class="form-control form-control-lg" id="login-password" placeholder="รหัสผ่าน" required>
+                                </div>
+                                <div class="d-grid gap-2">
+                                     <button type="submit" class="btn btn-primary action-btn">เข้าสู่ระบบ</button>
+                                </div>
+                                <div class="text-center my-3 text-muted">&mdash; หรือ &mdash;</div>
+                                <button type="button" onclick="loginWithGoogle()" class="btn google-btn action-btn">
+                                    <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google icon" class="google-icon" />
+                                    เข้าสู่ระบบด้วย Google
+                                </button>
+                            </form>
+                        </div>
+                        <div class="tab-pane fade" id="register-pane" role="tabpanel" aria-labelledby="register-tab" tabindex="0">
+                           <form onsubmit="event.preventDefault(); register();">
+                               <div class="mb-3">
+                                    <input type="text" class="form-control form-control-lg" id="register-name" placeholder="ชื่อ" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="email" class="form-control form-control-lg" id="register-email" placeholder="อีเมล" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="password" class="form-control form-control-lg" id="register-password" placeholder="รหัสผ่าน" required>
+                                </div>
+                                <div class="mb-4">
+                                    <input type="password" class="form-control form-control-lg" id="register-confirm-password" placeholder="ยืนยันรหัสผ่าน" required>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary action-btn">สร้างบัญชี</button>
+                                </div>
+                           </form>
+                        </div>
                     </div>
-                  </div>
                 </div>
-              </div>
+            </div>
         </div>
 
         <div id="gameArea">
@@ -278,7 +317,6 @@
     </div>
 
     <canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1001; pointer-events: none;"></canvas>
-    
     <audio id="hoverSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/hover.mp3"></audio>
     <audio id="clickSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/click.mp3"></audio>
     <audio id="wrongSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/wrong.mp3"></audio>
@@ -289,18 +327,18 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
     // --- Firebase Initialization ---
-    // ⚠️ โปรดใส่ค่า Firebase Config ที่ถูกต้องของคุณที่นี่
-        const firebaseConfig = {
+    const firebaseConfig = {
         apiKey: "AIzaSyA1DVvalDuthN0-pUwECByT7-Ur5uTlsEE",
         authDomain: "thai-phairater.firebaseapp.com",
         projectId: "thai-phairater",
-        storageBucket: "thai-phairater.firebasestorage.app",
+        storageBucket: "thai-phairater.appspot.com",
         messagingSenderId: "995255977727",
         appId: "1:995255977727:web:c0c1170665a19ab5136eca"
-        };
+    };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     let currentUser = null;
@@ -312,7 +350,6 @@
     let countdownInterval, selected = [], remainingChars = [];
     const TOTAL_TIME = 60, LIVES = 3;
     let totalScore = 0, lives = LIVES, timeLeft = TOTAL_TIME, completedLessons = 0;
-    
     const CHARS_PER_ROUND = 12;
 
     const hoverSound = document.getElementById("hoverSound"), clickSound = document.getElementById("clickSound"), wrongSound = document.getElementById("wrongSound"), gameoverSound = document.getElementById("gameoverSound"), winSound = document.getElementById("winSound"), coinSound = document.getElementById("coinSound");
@@ -337,22 +374,18 @@
     
     function calculateAndApplyLayout() {
         if (!gameGrid || gameGrid.children.length === 0) return;
-        const numCards = gameGrid.children.length;
+        const numCards = Array.from(gameGrid.children).filter(c => !c.classList.contains('matched')).length;
+        if (numCards === 0) return;
         const gap = 10;
-        
         const gameAreaStyle = window.getComputedStyle(gameArea);
         const availableWidth = gameArea.clientWidth - (parseInt(gameAreaStyle.paddingLeft) + parseInt(gameAreaStyle.paddingRight));
-        
         const h1 = gameArea.querySelector('h1');
         const controls = gameArea.querySelector('.controls');
         const h1Height = h1 ? h1.offsetHeight : 0;
         const controlsHeight = controls ? controls.offsetHeight : 0;
-        
         const topOffset = h1Height + controlsHeight;
         const availableHeight = gameArea.clientHeight - topOffset - 20;
-        
         let bestLayout = { cols: 0, cardSize: 0 };
-
         for (let cols = 3; cols <= numCards / 2; cols++) {
             if (numCards % cols !== 0 && cols > numCards / 2) continue;
             const rows = Math.ceil(numCards / cols);
@@ -363,7 +396,11 @@
                 bestLayout = { cols, cardSize };
             }
         }
-        
+         if (bestLayout.cols === 0) { // Fallback for small number of cards
+            bestLayout.cols = Math.ceil(Math.sqrt(numCards));
+            const sizeW = (availableWidth - (bestLayout.cols - 1) * gap) / bestLayout.cols;
+            bestLayout.cardSize = sizeW;
+        }
         gameGrid.style.gridTemplateColumns = `repeat(${bestLayout.cols}, ${bestLayout.cardSize}px)`;
         const cards = gameGrid.querySelectorAll('.card');
         cards.forEach(card => card.style.fontSize = `${bestLayout.cardSize * 0.5}px`);
@@ -416,7 +453,10 @@
         initializeGameUI();
     }
 
-    // --- Core Game Flow ---
+    // --- ✅ Core Game Flow (Corrected & Cleaned) ---
+
+    let matchedPairsInRound = 0;
+
     function startGame() {
         document.getElementById("startBtn").style.display = "none";
         restartBtn.style.display = "inline-block";
@@ -435,6 +475,7 @@
         clearInterval(countdownInterval);
         timeLeft = TOTAL_TIME;
         updateTimerBar();
+        matchedPairsInRound = 0;
 
         countdownInterval = setInterval(() => {
             if (--timeLeft <= 0) {
@@ -456,7 +497,13 @@
         gameGrid.innerHTML = "";
         selected = [];
         const roundChars = remainingChars.splice(0, CHARS_PER_ROUND);
-        if (roundChars.length === 0) return;
+        if (roundChars.length === 0) {
+            // This case happens if all characters are used up
+             playAudio(winSound);
+             showPopup(`🎊 ยอดเยี่ยม! คุณเคลียร์เกมได้สำเร็จ!<br>คะแนนรวม: ${totalScore}`, true);
+             restartBtn.textContent = "เริ่มเกมใหม่";
+             return;
+        }
         
         let cardsData = [];
         roundChars.forEach(char => {
@@ -485,7 +532,7 @@
     }
 
     function selectCard(div, card) {
-        if (selected.length >= 2 || div.classList.contains("selected") || timeLeft <= 0) return;
+        if (selected.length >= 2 || div.classList.contains("selected") || div.classList.contains("matched") || timeLeft <= 0) return;
         
         div.classList.add("selected");
         playAudio(clickSound);
@@ -493,42 +540,54 @@
 
         if (selected.length === 2) {
             const [first, second] = selected;
-            if (first.id === second.id) {
-                playAudio(coinSound);
-                new Audio(first.soundUrl).play();
-                totalScore += 10;
-                scoreValue.textContent = totalScore;
-                
-                setTimeout(() => {
-                    first.div.style.visibility = 'hidden';
-                    second.div.style.visibility = 'hidden';
-                    selected = [];
+                 if (first.id === second.id) {
+                     playAudio(coinSound);
+                     new Audio(first.soundUrl).play();
+                     totalScore += 10;
+                     scoreValue.textContent = totalScore;
+                     matchedPairsInRound++;
 
-                    if (Array.from(gameGrid.children).every(c => c.style.visibility === 'hidden')) {
-                        completedLessons++;
-                        updateTrophyDisplay();
-                        if (remainingChars.length > 0) {
-                            setTimeout(startRound, 800);
-                        } else {
-                            clearInterval(countdownInterval);
-                            playAudio(winSound);
-                            showPopup(`🎊 ยอดเยี่ยม! คุณเคลียร์เกมได้สำเร็จ!<br>คะแนนรวม: ${totalScore}`, true);
-                            restartBtn.textContent = "เริ่มเกมใหม่";
-                        }
-                    }
-                }, 600);
-            } else {
-                playAudio(wrongSound);
-                totalScore = Math.max(0, totalScore - 5);
-                scoreValue.textContent = totalScore;
-                setTimeout(() => {
-                    first.div.classList.remove("selected");
-                    second.div.classList.remove("selected");
-                    selected = [];
-                }, 800);
+                     first.div.classList.add("matched");
+                     second.div.classList.add("matched");
+
+                     selected = [];
+
+                     // ✅ รอ animation เสร็จค่อยลบการ์ด
+                     setTimeout(() => {
+                         first.div.remove();
+                         second.div.remove();
+                         
+
+                         // ✅ ถ้าจับครบทุกคู่ในรอบนี้ ให้เริ่มรอบถัดไป
+                         if (matchedPairsInRound === CHARS_PER_ROUND) {
+                             completedLessons++;
+                             updateTrophyDisplay();
+                             if (remainingChars.length > 0) {
+                                 setTimeout(startRound, 800);
+                             } else {
+                                 clearInterval(countdownInterval);
+                                 playAudio(winSound);
+                                 showPopup(`🎊 ยอดเยี่ยม! คุณเคลียร์เกมได้สำเร็จ!<br>คะแนนรวม: ${totalScore}`, true);
+                                 restartBtn.textContent = "เริ่มเกมใหม่";
+                             }
+                         }
+
+                     }, 400); // รอให้ effect scale & opacity จบก่อนค่อย remove
+
+                 }
+                 else {
+                 playAudio(wrongSound);
+                 totalScore = Math.max(0, totalScore - 5);
+                 scoreValue.textContent = totalScore;
+                 setTimeout(() => {
+                     first.div.classList.remove("selected");
+                     second.div.classList.remove("selected");
+                     selected = [];
+                 }, 800);
             }
         }
     }
+
     
     // --- Auth Functions & Listeners ---
     function updateAuthUI() {
@@ -547,7 +606,7 @@
             sidebarUserEmail.textContent = currentUser.email;
             initializeGameUI();
         } else {
-            authContainer.style.display = 'block'; // Use block for the new form container
+            authContainer.style.display = 'flex';
             gameArea.style.display = 'none';
             topBar.style.display = 'none';
             profileIconContainer.style.display = 'none';
@@ -557,28 +616,60 @@
     function openSidebar() { sidebar.classList.add('open'); sidebarOverlay.style.display = 'block'; }
     function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.style.display = 'none'; }
     
+    // --- AUTH FUNCTIONS ---
     async function register() {
-        const email = document.getElementById('email').value, password = document.getElementById('password').value;
-        if (!email || !password) return alert('กรุณากรอกอีเมลและรหัสผ่าน');
-        try { await auth.createUserWithEmailAndPassword(email, password); }
-        catch (error) { alert('ลงทะเบียนล้มเหลว: ' + error.message); }
+        const name = document.getElementById('register-name').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const confirmPassword = document.getElementById('register-confirm-password').value;
+
+        if (!name || !email || !password) {
+            return alert('กรุณากรอกข้อมูลให้ครบทุกช่อง');
+        }
+        if (password !== confirmPassword) {
+            return alert('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
+        }
+
+        try {
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            await userCredential.user.updateProfile({
+                displayName: name
+            });
+        } catch (error) {
+            alert('ลงทะเบียนล้มเหลว: ' + error.message);
+        }
     }
+
     async function login() {
-        const email = document.getElementById('email').value, password = document.getElementById('password').value;
-        if (!email || !password) return alert('กรุณากรอกอีเมลและรหัสผ่าน');
-        try { await auth.signInWithEmailAndPassword(email, password); }
-        catch (error) { alert('เข้าสู่ระบบล้มเหลว: ' + error.message); }
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        
+        if (!email || !password) {
+            return alert('กรุณากรอกอีเมลและรหัสผ่าน');
+        }
+
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+        } catch (error) {
+            alert('เข้าสู่ระบบล้มเหลว: ' + error.message);
+        }
     }
+
     async function loginWithGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
-        try { await auth.signInWithPopup(provider); }
-        catch (error) { alert('เข้าสู่ระบบด้วย Google ล้มเหลว: ' + error.message); }
+        try {
+            await auth.signInWithPopup(provider);
+        } catch (error) {
+            alert('เข้าสู่ระบบด้วย Google ล้มเหลว: ' + error.message);
+        }
     }
     async function logout() {
         try {
             await auth.signOut();
             resetGame();
-        } catch (error) { alert('ออกจากระบบล้มเหลว: ' + error.message); }
+        } catch (error) {
+            alert('ออกจากระบบล้มเหลว: ' + error.message);
+        }
     }
 
     auth.onAuthStateChanged((user) => { 
@@ -590,7 +681,6 @@
     sidebarCloseBtn.onclick = closeSidebar;
     sidebarLogoutBtn.onclick = logout;
     window.addEventListener("resize", calculateAndApplyLayout);
-
 
     function setFullHeight() {
         const vh = window.innerHeight * 0.01;
