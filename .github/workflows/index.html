@@ -1,490 +1,604 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<body>
-  <h1>เกมจับคู่พยัญชนะไทย</h1>
-  <div id="score">
-  คะแนนสะสม: <span id="totalScore">0</span> | ⏱ เหลือเวลา: <span id="timeLeft">60</span> วินาที
-</div>
-<button id="startBtn" onclick="startGame()">เริ่มเกม</button>
-<button id="restartBtn" onclick="restartGame()" style="display:none;">เล่นต่อ</button>
+    <meta charset="UTF-8">
+    <meta name="google-apps-script-meta-features" content="viewport-meta-tag=true">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
+    <title>เกมจับคู่พยัญชนะไทย</title>
 
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Taviraj:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=TH+Sarabun+New:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css">
 
-  <div id="game"></div>
-  <!-- Popup, เสียง และ Script เดิมตามหลังได้ -->
-</body>
+    <style>
+        /* --- General Styles --- */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            min-height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
 
-<style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    font-family: 'TH Sarabun New', sans-serif;
-    background: #e0f7fa;
-    text-align: center;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
+        /* --- Game Area & Original App Styles --- */
+        #gameArea, #topBar, #sidebar {
+            font-family: 'TH Sarabun New', sans-serif;
+        }
+        
+        #main-wrapper {
+            width: 100vw;
+            height: calc(var(--vh, 1vh) * 100);
+            transition: padding 0.3s ease;
+        }
+        
+        body {
+             background: #e0f7fa; /* Fallback background for the game */
+        }
+        
+        /* --- Top Navigation Bar --- */
+        #topBar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 70px;
+            background: #ffffff; z-index: 990; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: none; align-items: center; justify-content: space-between;
+            padding: 0 15px; box-sizing: border-box;
+        }
+        #profileSection, #progressSection, #statusSection { display: flex; align-items: center; gap: 20px; flex: 1; }
+        #progressSection { justify-content: center; font-size: 2.2em; }
+        #statusSection { justify-content: flex-end; font-size: 1.8em; font-weight: bold; }
+        .trophy-icon { filter: grayscale(1); opacity: 0.5; transition: all 0.3s ease; }
+        .trophy-icon.earned { filter: grayscale(0); opacity: 1; transform: scale(1.1); }
+        #scoreDisplay, #livesDisplay { display: flex; align-items: center; gap: 8px; }
+        #timerContainer { width: 180px; height: 20px; background-color: #e9ecef; border-radius: 10px; overflow: hidden; border: 2px solid #d0d0d0; }
+        #timerFill { height: 100%; width: 100%; background-color: #28a745; border-radius: 8px; transition: width 0.5s linear, background-color 0.5s ease; }
+        
+        /* --- Profile Icon & Sidebar --- */
+        #profileIconContainer { position: relative; cursor: pointer; display: none; }
+        #profileIconImg { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #sidebar { position: fixed; top: 0; left: 0; height: 100%; width: 280px; background: #ffffff; z-index: 1001; box-shadow: 4px 0 10px rgba(0,0,0,0.1); transform: translateX(-100%); transition: transform 0.3s ease-in-out; display: flex; flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box; }
+        #sidebar.open { transform: translateX(0); }
+        #sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; }
+        #sidebarProfileImg { width: 100px; height: 100px; border-radius: 50%; margin-top: 20px; margin-bottom: 15px; }
+        #sidebarUserName { font-size: 1.8em; font-weight: bold; color: #333; margin: 5px 0; }
+        #sidebarUserEmail { font-size: 1.2em; color: #666; margin-bottom: 30px; word-break: break-all; }
+        #sidebarCloseBtn { position: absolute; top: 10px; right: 15px; font-size: 2em; cursor: pointer; color: #999; }
+        #sidebarLogoutBtn { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; background: #f44336; color: white; width: 100%; }
 
-  body > *:not(#game) {
-    z-index: 2;
-  }
+        /* --- Auth Container (LOGIN FORM STYLES) --- */
+        #authContainer {
+            width: 100%;
+            height: 100%;
+            font-family: "Roboto", sans-serif;
+            background-color: #f8fafb;
+            display: none; /* Controlled by JS */
+            overflow-y: auto; /* Allow scrolling on small screens */
+        }
+        #authContainer p { color: #b3b3b3; font-weight: 300; }
+        #authContainer h3 { font-family: "Roboto", sans-serif; font-weight: 700; }
+        #authContainer a { transition: .3s all ease; }
+        #authContainer a:hover { text-decoration: none !important; }
+        .half, .half .container > .row { height: 100vh; }
 
-  #game {
-    display: grid;
-    justify-content: center;
-    align-content: center;
-    margin: auto;
-    padding: 1vh;
-    gap: 10px;
-    max-height: 70vh;
-    max-width: 95vw;
-  }
+        .half .contents, .half .bg { width: 50%; }
+        
+        .half .contents .form-group {
+            border: 1px solid #efefef;
+            padding: 15px 20px;
+            border-radius: 30px;
+            position: relative;
+        }
+        .half .contents .form-group label {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 20px;
+            font-size: 14px;
+            color: #b3b3b3;
+            transition: .3s all ease;
+        }
+        .half .contents .form-group input {
+            border: none;
+            background: transparent;
+        }
+        .half .contents .form-group.first {
+            border-top-left-radius: 30px;
+            border-top-right-radius: 30px;
+        }
+        .half .contents .form-group.last {
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            border-top: none;
+        }
+        .half .contents .form-control {
+            border: none;
+            padding: 0;
+            font-size: 14px;
+            border-radius: 0;
+        }
+        .half .contents .form-control:active, .half .contents .form-control:focus {
+            outline: none;
+            box-shadow: none;
+        }
+        .half .bg {
+            background-size: cover;
+            background-position: center;
+        }
+        .half a { color: #888; text-decoration: underline; }
+        .half .btn {
+            height: 54px;
+            padding-left: 30px;
+            padding-right: 30px;
+            border-radius: 30px;
+            font-size: 1rem;
+        }
+        .half .forgot-pass {
+            position: relative;
+            top: 2px;
+            font-size: 14px;
+        }
+        .btn-google {
+            background: #DB4437;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-google:hover {
+            color: white;
+            opacity: 0.9;
+        }
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
 
-.card {
-  background: #ffffff;
-  border-radius: 12px;
-  aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(16px, 4vw, 36px);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transition: transform 0.2s, background-color 0.2s;
-  cursor: pointer;
-}
+        /* --- Game Area --- */
+        #gameArea { display: none; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; height: 100%; padding: 80px 15px 15px 15px; box-sizing: border-box; }
+        #gameArea h1 { font-size: 2.5em; color: #00796b; margin: 0; }
+        #gameArea .controls { margin: 15px 0; }
+        #gameArea #startBtn, #gameArea #restartBtn { padding: 10px 25px; font-size: 1.2em; border: none; border-radius: 8px; color: white; background-color: #007bff; cursor: pointer; }
+        #gameArea #restartBtn { background-color: #28a745; }
+        #game { display: grid; justify-content: center; align-content: center; flex-grow: 1; width: 100%; gap: 10px; }
+        .card { background: #ffffff; border-radius: 8px; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; font-size: 2em; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: transform 0.2s; cursor: pointer; }
+        .card:hover { transform: scale(1.05); }
+        .card.selected { background-color: #ffccbc !important; transform: scale(1.05); pointer-events: none; opacity: 0.6; }
+        .card img { width: 80%; height: 80%; object-fit: contain; pointer-events: none; }
+        
+        /* --- Popup --- */
+        #popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        #popupBox { background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); text-align: center; font-size: 1.5em; }
+        #popupBox button { margin-top: 20px; padding: 10px 20px; font-size: 1em; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px; }
 
-.card:hover {
-  background-color: #c8e6c9;
-  transform: scale(1.05);
-}
-
-.card.selected {
-  background-color: #ffccbc !important;
-  transform: scale(1.05);
-  pointer-events: none;
-  opacity: 0.6;
-  transition: background-color 0.4s, opacity 0.4s;
-}
-
-.card img {
-  width: 80%;
-  height: 80%;
-  object-fit: contain;
-  pointer-events: none;
-}
-
-</style>
-
-
-
-
-
-
+        /* --- ✅ Responsive Styles for Mobile (Corrected) --- */
+        @media (max-width: 991.98px) {
+            .half, .half .container > .row {
+                height: auto; /* ปรับความสูงอัตโนมัติตามเนื้อหา */
+            }
+            .half .bg {
+                height: 200px; /* กำหนดความสูงรูปภาพด้านบน */
+            }
+            .half .contents, .half .bg {
+                width: 100%; /* ทำให้เต็มความกว้าง */
+            }
+            /* * ยกเลิกการจัดกึ่งกลางแนวตั้งของ Bootstrap (align-items-center)
+             * เพื่อให้ฟอร์มเริ่มต่อจากรูปภาพด้านบนเลย 
+            */
+            .half .contents .row {
+                min-height: auto;
+                align-items: flex-start !important;
+            }
+            .half .contents .col-md-7 {
+                padding-top: 40px; /* เพิ่มระยะห่างด้านบนของฟอร์ม */
+                padding-bottom: 40px; /* เพิ่มระยะห่างด้านล่าง */
+            }
+        }
+    </style>
 </head>
 <body>
-    <div id="popup" style="display:none;">
-        <div id="popupBox">
-            <div id="popupText">🎉 คุณได้ 120 คะแนน!</div>
-            <button onclick="closePopup()">ตกลง</button>
+    <div id="topBar">
+        <div id="profileSection">
+            <div id="profileIconContainer"><img id="profileIconImg" src="" alt="Profile"></div>
+        </div>
+        <div id="progressSection"></div>
+        <div id="statusSection">
+            <div id="scoreDisplay">💰 <span id="scoreValue">0</span></div>
+            <div id="livesDisplay"></div>
+            <div id="timerContainer"><div id="timerFill"></div></div>
+        </div>
+    </div>
+    <div id="sidebar-overlay"></div>
+    <div id="sidebar">
+        <span id="sidebarCloseBtn">&times;</span>
+        <img id="sidebarProfileImg" src="" alt="Profile">
+        <h2 id="sidebarUserName"></h2>
+        <p id="sidebarUserEmail"></p>
+        <button id="sidebarLogoutBtn">ออกจากระบบ</button>
+    </div>
+
+    <div id="main-wrapper">
+        
+        <div id="authContainer">
+             <div class="d-lg-flex half">
+                <div class="bg order-1 order-md-2" style="background-image: url('https://preview.colorlib.com/theme/bootstrap/login-form-05/images/bg_1.jpg');"></div>
+                <div class="contents order-2 order-md-1">
+                  <div class="container">
+                    <div class="row align-items-center justify-content-center">
+                      <div class="col-md-7">
+                        <h3>เข้าสู่ระบบเกม <strong>จับคู่พยัญชนะ</strong></h3>
+                        <p class="mb-4">กรุณากรอกอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบ หรือลงทะเบียนใหม่</p>
+                        
+                        <form onsubmit="event.preventDefault();">
+                          <div class="form-group first">
+                            <label for="email">อีเมล</label>
+                            <input type="email" class="form-control" placeholder="your-email@gmail.com" id="email">
+                          </div>
+                          <div class="form-group last mb-3">
+                            <label for="password">รหัสผ่าน</label>
+                            <input type="password" class="form-control" placeholder="Your Password" id="password">
+                          </div>
+                          
+                          <div class="d-flex mb-4 align-items-center">
+                            <span class="ml-auto"><a href="#" class="forgot-pass" onclick="alert('ฟังก์ชันนี้ยังไม่เปิดใช้งาน')">ลืมรหัสผ่าน?</a></span> 
+                          </div>
+
+                          <button type="button" onclick="login()" class="btn btn-block btn-primary">เข้าสู่ระบบ</button>
+                          <button type="button" onclick="register()" class="btn btn-block btn-info mt-2">ลงทะเบียน</button>
+                          
+                          <span class="d-block text-center my-4 text-muted">&mdash; หรือ &mdash;</span>
+
+                          <button type="button" onclick="loginWithGoogle()" class="btn btn-block btn-google">
+                              <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google icon" />
+                              เข้าสู่ระบบด้วย Google
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+        </div>
+
+        <div id="gameArea">
+            <h1>เกมจับคู่พยัญชนะไทย</h1>
+            <div class="controls">
+                <button id="startBtn" onclick="startGame()">เริ่มเกม</button>
+                <button id="restartBtn" onclick="restartGame()" style="display:none;">เล่นต่อ</button>
+            </div>
+            <div id="game"></div>
+            <div id="popup">
+                <div id="popupBox">
+                    <div id="popupText"></div>
+                    <button onclick="closePopup()">ตกลง</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="game"></div>
-
+    <canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1001; pointer-events: none;"></canvas>
+    
     <audio id="hoverSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/hover.mp3"></audio>
     <audio id="clickSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/click.mp3"></audio>
     <audio id="wrongSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/wrong.mp3"></audio>
     <audio id="gameoverSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/game-over.mp3"></audio>
     <audio id="winSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/winning.mp3"></audio>
     <audio id="coinSound" src="https://raw.githubusercontent.com/Phairater/thai-sounds/main/coin.mp3"></audio>
-
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    
     <script>
+    // --- Firebase Initialization ---
+    // ⚠️ โปรดใส่ค่า Firebase Config ที่ถูกต้องของคุณที่นี่
+        const firebaseConfig = {
+        apiKey: "AIzaSyA1DVvalDuthN0-pUwECByT7-Ur5uTlsEE",
+        authDomain: "thai-phairater.firebaseapp.com",
+        projectId: "thai-phairater",
+        storageBucket: "thai-phairater.firebasestorage.app",
+        messagingSenderId: "995255977727",
+        appId: "1:995255977727:web:c0c1170665a19ab5136eca"
+        };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    let currentUser = null;
 
+    // --- DOM Elements ---
+    const mainWrapper = document.getElementById('main-wrapper'), authContainer = document.getElementById('authContainer'), gameArea = document.getElementById('gameArea'), gameGrid = document.getElementById('game'), topBar = document.getElementById('topBar'), restartBtn = document.getElementById('restartBtn'), popup = document.getElementById('popup'), popupText = document.getElementById('popupText'), profileIconContainer = document.getElementById('profileIconContainer'), profileIconImg = document.getElementById('profileIconImg'), sidebar = document.getElementById('sidebar'), sidebarOverlay = document.getElementById('sidebar-overlay'), sidebarCloseBtn = document.getElementById('sidebarCloseBtn'), sidebarProfileImg = document.getElementById('sidebarProfileImg'), sidebarUserName = document.getElementById('sidebarUserName'), sidebarUserEmail = document.getElementById('sidebarUserEmail'), sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn'), scoreValue = document.getElementById('scoreValue'), livesDisplay = document.getElementById('livesDisplay'), timerFill = document.getElementById('timerFill'), progressSection = document.getElementById('progressSection');
+    
+    // --- Game Logic Variables ---
+    let countdownInterval, selected = [], remainingChars = [];
+    const TOTAL_TIME = 60, LIVES = 3;
+    let totalScore = 0, lives = LIVES, timeLeft = TOTAL_TIME, completedLessons = 0;
+    
+    const CHARS_PER_ROUND = 12;
 
-      window.addEventListener("resize", calculateCardSize);
+    const hoverSound = document.getElementById("hoverSound"), clickSound = document.getElementById("clickSound"), wrongSound = document.getElementById("wrongSound"), gameoverSound = document.getElementById("gameoverSound"), winSound = document.getElementById("winSound"), coinSound = document.getElementById("coinSound");
+    const baseUrl = "https://raw.githubusercontent.com/Phairater/thai-sounds/main/";
+    const allCharIds = [ "ก", "ข", "ฃ", "ค", "ฅ", "ฆ", "ง", "จ", "ฉ", "ช", "ซ", "ฌ", "ญ", "ฎ", "ฏ", "ฐ", "ฑ", "ฒ", "ณ", "ด", "ต", "ถ", "ท", "ธ", "น", "บ", "ป", "ผ", "ฝ", "พ", "ฟ", "ภ", "ม", "ย", "ร", "ล", "ว", "ศ", "ษ", "ส", "ห", "ฬ", "อ", "ฮ"];
+    const allChars = allCharIds.map(id => ({ id: id, img: `${baseUrl}${id}.png`, sound: `${baseUrl}${id}.mp3` }));
+    const TOTAL_LESSONS = Math.ceil(allChars.length / CHARS_PER_ROUND);
 
-        let countdownInterval;
-        let timeLeft;
-        let startTime;
+    // --- Helper Functions ---
+    function playAudio(audio) {
+        audio.currentTime = 0;
+        audio.play().catch(e => console.error("Audio play failed:", e));
+    }
 
-        let selected = [];
-        let remainingChars = [];
-        let score = 0;
-        let totalScore = 0;
-        let allMatched = 0; // จำนวนการจับคู่ที่สำเร็จ
-
-        const hoverSound = document.getElementById("hoverSound");
-        const clickSound = document.getElementById("clickSound");
-        const wrongSound = document.getElementById("wrongSound");
-        const gameoverSound = document.getElementById("gameoverSound");
-        const winSound = document.getElementById("winSound");
-        const coinSound = document.getElementById("coinSound");
-
-const chars = [
-  { id: "ก", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ก.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ก.mp3" },
-  { id: "ข", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ข.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ข.mp3" },
-  { id: "ฃ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฃ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฃ.mp3" },
-  { id: "ค", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ค.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ค.mp3" },
-  { id: "ฅ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฅ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฅ.mp3" },
-  { id: "ฆ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฆ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฆ.mp3" },
-  { id: "ง", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ง.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ง.mp3" },
-  { id: "จ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/จ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/จ.mp3" },
-  { id: "ฉ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฉ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฉ.mp3" },
-  { id: "ช", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ช.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ช.mp3" },
-  { id: "ซ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ซ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ซ.mp3" },
-  { id: "ฌ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฌ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฌ.mp3" },
-  { id: "ญ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ญ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ญ.mp3" },
-  { id: "ฎ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฎ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฎ.mp3" },
-  { id: "ฏ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฏ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฏ.mp3" },
-  { id: "ฐ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฐ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฐ.mp3" },
-  { id: "ฑ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฑ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฑ.mp3" },
-  { id: "ฒ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฒ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฒ.mp3" },
-  { id: "ณ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ณ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ณ.mp3" },
-  { id: "ด", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ด.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ด.mp3" },
-  { id: "ต", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ต.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ต.mp3" },
-  { id: "ถ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ถ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ถ.mp3" },
-  { id: "ท", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ท.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ท.mp3" },
-  { id: "ธ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ธ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ธ.mp3" },
-  { id: "น", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/น.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/น.mp3" },
-  { id: "บ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/บ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/บ.mp3" },
-  { id: "ป", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ป.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ป.mp3" },
-  { id: "ผ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ผ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ผ.mp3" },
-  { id: "ฝ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฝ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฝ.mp3" },
-  { id: "พ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/พ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/พ.mp3" },
-  { id: "ฟ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฟ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฟ.mp3" },
-  { id: "ภ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ภ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ภ.mp3" },
-  { id: "ม", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ม.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ม.mp3" },
-  { id: "ย", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ย.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ย.mp3" },
-  { id: "ร", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ร.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ร.mp3" },
-  { id: "ล", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ล.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ล.mp3" },
-  { id: "ว", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ว.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ว.mp3" },
-  { id: "ศ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ศ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ศ.mp3" },
-  { id: "ษ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ษ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ษ.mp3" },
-  { id: "ส", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ส.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ส.mp3" },
-  { id: "ห", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ห.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ห.mp3" },
-  { id: "ฬ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฬ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฬ.mp3" },
-  { id: "อ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/อ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/อ.mp3" },
-  { id: "ฮ", img: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฮ.png", sound: "https://raw.githubusercontent.com/Phairater/thai-sounds/main/ฮ.mp3" }
-];
-
-
-        function playAudio(audio) {
-            audio.pause();
-            audio.currentTime = 0;
-            audio.play().catch(() => {});
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
         }
+        return array;
+    }
+    
+    function calculateAndApplyLayout() {
+        if (!gameGrid || gameGrid.children.length === 0) return;
+        const numCards = gameGrid.children.length;
+        const gap = 10;
+        
+        const gameAreaStyle = window.getComputedStyle(gameArea);
+        const availableWidth = gameArea.clientWidth - (parseInt(gameAreaStyle.paddingLeft) + parseInt(gameAreaStyle.paddingRight));
+        
+        const h1 = gameArea.querySelector('h1');
+        const controls = gameArea.querySelector('.controls');
+        const h1Height = h1 ? h1.offsetHeight : 0;
+        const controlsHeight = controls ? controls.offsetHeight : 0;
+        
+        const topOffset = h1Height + controlsHeight;
+        const availableHeight = gameArea.clientHeight - topOffset - 20;
+        
+        let bestLayout = { cols: 0, cardSize: 0 };
 
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
+        for (let cols = 3; cols <= numCards / 2; cols++) {
+            if (numCards % cols !== 0 && cols > numCards / 2) continue;
+            const rows = Math.ceil(numCards / cols);
+            const sizeW = (availableWidth - (cols - 1) * gap) / cols;
+            const sizeH = (availableHeight - (rows - 1) * gap) / rows;
+            const cardSize = Math.floor(Math.min(sizeW, sizeH));
+            if (cardSize > bestLayout.cardSize) {
+                bestLayout = { cols, cardSize };
             }
-            return array;
         }
-        function startGame() {
-  document.getElementById("startBtn").style.display = "none";
-  document.getElementById("restartBtn").style.display = "inline-block";
-  totalScore = 0;
-  document.getElementById("totalScore").textContent = 0;
-  document.getElementById("timeLeft").textContent = 60;
-  remainingChars = shuffle([...chars]);
-  startRound();
-}
+        
+        gameGrid.style.gridTemplateColumns = `repeat(${bestLayout.cols}, ${bestLayout.cardSize}px)`;
+        const cards = gameGrid.querySelectorAll('.card');
+        cards.forEach(card => card.style.fontSize = `${bestLayout.cardSize * 0.5}px`);
+    }
 
-
-          function startRound() {
-              startTime = Date.now();
-              timeLeft = 60;
-              document.getElementById("timeLeft").textContent = timeLeft;
-              clearInterval(countdownInterval);
-              countdownInterval = setInterval(() => {
-                  timeLeft--;
-                  document.getElementById("timeLeft").textContent = timeLeft;
-                  if (timeLeft <= 0) {
-                      clearInterval(countdownInterval);
-                      playAudio(gameoverSound);
-                      showPopup("⏱ หมดเวลา! กรุณากด ' เริ่มใหม่ ' เพื่อเล่นอีกครั้ง", false);
-                  }
-              }, 1000);
-
-              const game = document.getElementById("game");
-              game.innerHTML = "";
-              selected = [];
-              score = 0;
-
-              // สร้างสำเนาชุดพยัญชนะทั้งหมด และสุ่มใหม่ทุกครั้งโดยไม่ซ้ำ
-              const pool = shuffle([...chars]);
-              const thisRoundChars = pool.slice(0, 12); // หยิบ 12 ตัวแรกไม่ซ้ำกันแน่นอน
-
-              let cards = [];
-              thisRoundChars.forEach(char => {
-                  cards.push({ type: 'char', id: char.id, sound: char.sound });
-                  cards.push({ type: 'img', id: char.id, img: char.img, sound: char.sound });
-              });
-
-              shuffle(cards);
-
-cards.forEach((card, index) => {
-  const div = document.createElement("div");
-  div.classList.add("card");
-  div.dataset.index = index;
-  div.dataset.id = card.id;
-  div.dataset.type = card.type;
-
-  if (card.type === 'char') {
-    div.textContent = card.id;
-  } else {
-    const img = document.createElement("img");
-    img.src = card.img;
-    div.appendChild(img);
-  }
-
-  div.onclick = () => selectCard(div, card);
-  div.onmouseenter = () => playAudio(hoverSound);
-  game.appendChild(div);
-});
-
-// ✅ คำนวณขนาดเมื่อเพิ่มครบ
-calculateCardSize();
-
-
-              calculateCardSize();
-          }
-
-        function restartGame() {
-            closePopup();
-            clearInterval(countdownInterval);
-            totalScore = 0;
-            document.getElementById("totalScore").textContent = totalScore;
-            remainingChars = shuffle([...chars]);
-            document.getElementById("game").innerHTML = "";
-            startRound();
+    function showPopup(msg, withConfetti = false) {
+        popupText.innerHTML = msg;
+        popup.style.display = "flex";
+        if (withConfetti && typeof confetti === 'function') {
+            const myConfetti = confetti.create(document.getElementById('confetti-canvas'), { resize: true, useWorker: true });
+            myConfetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
         }
+    }
+    function closePopup() { popup.style.display = "none"; }
 
-        function selectCard(div, card) {
-            if (selected.length >= 2 || div.classList.contains("selected")) return;
-            div.classList.add("selected");
-            playAudio(clickSound);
-            selected.push({ div, id: card.id, sound: card.sound });
+    // --- UI Update Functions ---
+    function updateLivesDisplay() { livesDisplay.innerHTML = '❤️'.repeat(lives) + '💔'.repeat(LIVES - lives); }
+    function updateTrophyDisplay() {
+        progressSection.innerHTML = '';
+        for (let i = 1; i <= TOTAL_LESSONS; i++) {
+            const trophy = document.createElement('span');
+            trophy.className = 'trophy-icon';
+            if (i <= completedLessons) trophy.classList.add('earned');
+            trophy.textContent = '🏆';
+            progressSection.appendChild(trophy);
+        }
+    }
+    function updateTimerBar() {
+        const percentage = (timeLeft / TOTAL_TIME) * 100;
+        timerFill.style.width = `${percentage}%`;
+        if (percentage <= 25) timerFill.style.backgroundColor = '#dc3545';
+        else if (percentage <= 50) timerFill.style.backgroundColor = '#ffc107';
+        else timerFill.style.backgroundColor = '#28a745';
+    }
 
-            if (selected.length === 2) {
-                const [first, second] = selected;
-                if (first.id === second.id) {
-                    new Audio(first.sound).play().catch(() => {});
-                    playAudio(coinSound);
-                    showEffect(first.div);
-                    showEffect(second.div);
-                    totalScore += 10;
-                    score += 10;
-                    document.getElementById("totalScore").textContent = totalScore;
+    function initializeGameUI() {
+        scoreValue.textContent = totalScore;
+        timeLeft = TOTAL_TIME;
+        updateLivesDisplay();
+        updateTrophyDisplay();
+        updateTimerBar();
+    }
+    
+    function resetGame() {
+        clearInterval(countdownInterval);
+        totalScore = 0; lives = LIVES; completedLessons = 0;
+        gameGrid.innerHTML = "";
+        document.getElementById("startBtn").style.display = "inline-block";
+        restartBtn.style.display = "none";
+        initializeGameUI();
+    }
 
-                    setTimeout(() => {
-                        first.div.style.display = "none"; // ซ่อนการ์ดที่จับคู่ถูก
-                        second.div.style.display = "none"; // ซ่อนการ์ดที่จับคู่ถูก
-                        selected = [];
+    // --- Core Game Flow ---
+    function startGame() {
+        document.getElementById("startBtn").style.display = "none";
+        restartBtn.style.display = "inline-block";
+        restartBtn.textContent = "เล่นต่อ";
+        totalScore = 0; lives = LIVES; completedLessons = 0;
+        initializeGameUI();
+        remainingChars = shuffle([...allChars]);
+        startRound();
+    }
+    function restartGame() {
+        closePopup();
+        startGame();
+    }
 
-                        // ตรวจสอบว่าเกมจบครบทุกตัวแล้ว
-                        if ([...document.querySelectorAll(".card")].every(c => c.style.display === "none")) {
-                            setTimeout(() => {
-                                if (remainingChars.length > 0) {
-                                    startRound(); // เริ่มรอบใหม่
-                                } else {
-                                    showPopup(`🎊 เกมจบแล้ว! คุณสะสมได้ทั้งหมด ${totalScore} คะแนน!`, true);
-                                }
-                            }, 500);
-                        }
-                    }, 600);
+    function startRound() {
+        clearInterval(countdownInterval);
+        timeLeft = TOTAL_TIME;
+        updateTimerBar();
+
+        countdownInterval = setInterval(() => {
+            if (--timeLeft <= 0) {
+                clearInterval(countdownInterval);
+                lives--;
+                updateLivesDisplay();
+                playAudio(gameoverSound);
+                if (lives > 0) {
+                    showPopup(`⏱ หมดเวลา! เสีย 1 ชีวิต! <br>เริ่มด่านใหม่...`, false);
+                    setTimeout(() => { closePopup(); startRound(); }, 2500);
                 } else {
-                    playAudio(wrongSound);
-                    totalScore = Math.max(0, totalScore - 5);
-                    document.getElementById("totalScore").textContent = totalScore;
-                    setTimeout(() => {
-                        first.div.classList.remove("selected");
-                        second.div.classList.remove("selected");
-                        selected = [];
-                    }, 800);
+                    showPopup("💔 ชีวิตหมด! เกมจบแล้ว", false);
+                    restartBtn.textContent = "เริ่มเกมใหม่";
                 }
             }
-        }
+            updateTimerBar();
+        }, 1000);
 
-        function showEffect(div) {
-            const effect = document.createElement("div");
-            effect.className = "effect";
-            div.appendChild(effect);
-            setTimeout(() => div.removeChild(effect), 800);
-        }
-
-        function showPopup(msg, withConfetti = false) {
-            document.getElementById("popupText").innerHTML = msg;
-            document.getElementById("popup").style.display = "flex";
-            if (withConfetti) launchConfetti();
-        }
-
-        function closePopup() {
-            document.getElementById("popup").style.display = "none";
-        }
-
-        function launchConfetti() {
-            const canvas = document.getElementById('confetti');
-            const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            let particles = [];
-            for (let i = 0; i < 150; i++) {
-                particles.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height - canvas.height,
-                    r: Math.random() * 6 + 4,
-                    c: `hsl(${Math.random()*360}, 100%, 60%)`,
-                    v: Math.random() * 4 + 2
-                });
+        gameGrid.innerHTML = "";
+        selected = [];
+        const roundChars = remainingChars.splice(0, CHARS_PER_ROUND);
+        if (roundChars.length === 0) return;
+        
+        let cardsData = [];
+        roundChars.forEach(char => {
+            cardsData.push({ type: 'char', id: char.id, sound: char.sound });
+            cardsData.push({ type: 'img', id: char.id, img: char.img, sound: char.sound });
+        });
+        
+        shuffle(cardsData).forEach(cardData => {
+            const cardDiv = document.createElement("div");
+            cardDiv.classList.add("card");
+            cardDiv.dataset.id = cardData.id;
+            
+            if (cardData.type === 'char') cardDiv.textContent = cardData.id;
+            else {
+                const img = document.createElement("img");
+                img.src = cardData.img;
+                img.alt = cardData.id;
+                cardDiv.appendChild(img);
             }
-            let animation = setInterval(() => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                particles.forEach(p => {
-                    p.y += p.v;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                    ctx.fillStyle = p.c;
-                    ctx.fill();
-                });
-                if (particles.every(p => p.y > canvas.height)) clearInterval(animation);
-            }, 30);
+            cardDiv.onclick = () => selectCard(cardDiv, cardData);
+            cardDiv.onmouseenter = () => playAudio(hoverSound);
+            gameGrid.appendChild(cardDiv);
+        });
+        
+        requestAnimationFrame(calculateAndApplyLayout);
+    }
+
+    function selectCard(div, card) {
+        if (selected.length >= 2 || div.classList.contains("selected") || timeLeft <= 0) return;
+        
+        div.classList.add("selected");
+        playAudio(clickSound);
+        selected.push({ div, id: card.id, soundUrl: card.sound });
+
+        if (selected.length === 2) {
+            const [first, second] = selected;
+            if (first.id === second.id) {
+                playAudio(coinSound);
+                new Audio(first.soundUrl).play();
+                totalScore += 10;
+                scoreValue.textContent = totalScore;
+                
+                setTimeout(() => {
+                    first.div.style.visibility = 'hidden';
+                    second.div.style.visibility = 'hidden';
+                    selected = [];
+
+                    if (Array.from(gameGrid.children).every(c => c.style.visibility === 'hidden')) {
+                        completedLessons++;
+                        updateTrophyDisplay();
+                        if (remainingChars.length > 0) {
+                            setTimeout(startRound, 800);
+                        } else {
+                            clearInterval(countdownInterval);
+                            playAudio(winSound);
+                            showPopup(`🎊 ยอดเยี่ยม! คุณเคลียร์เกมได้สำเร็จ!<br>คะแนนรวม: ${totalScore}`, true);
+                            restartBtn.textContent = "เริ่มเกมใหม่";
+                        }
+                    }
+                }, 600);
+            } else {
+                playAudio(wrongSound);
+                totalScore = Math.max(0, totalScore - 5);
+                scoreValue.textContent = totalScore;
+                setTimeout(() => {
+                    first.div.classList.remove("selected");
+                    second.div.classList.remove("selected");
+                    selected = [];
+                }, 800);
+            }
         }
-
-window.onload = () => {
-  
-function calculateCardSize() {
-  const game = document.getElementById("game");
-  const padding = 10;
-  const cardCount = game.children.length;
-  const containerWidth = window.innerWidth * 0.95;
-  const containerHeight = window.innerHeight * 0.7;
-
-  let bestCols = 1;
-  let bestSize = 0;
-
-  for (let cols = 1; cols <= cardCount; cols++) {
-    const rows = Math.ceil(cardCount / cols);
-    const cardWidth = Math.floor((containerWidth - padding * (cols - 1)) / cols);
-    const cardHeight = Math.floor((containerHeight - padding * (rows - 1)) / rows);
-    const size = Math.min(cardWidth, cardHeight);
-
-    const totalWidth = size * cols + padding * (cols - 1);
-    const totalHeight = size * rows + padding * (rows - 1);
-
-    if (totalWidth <= containerWidth && totalHeight <= containerHeight && size > bestSize) {
-      bestSize = size;
-      bestCols = cols;
     }
-  }
+    
+    // --- Auth Functions & Listeners ---
+    function updateAuthUI() {
+        if (currentUser) {
+            authContainer.style.display = 'none';
+            gameArea.style.display = 'flex';
+            topBar.style.display = 'flex';
+            profileIconContainer.style.display = 'block';
 
-  game.style.gridTemplateColumns = `repeat(${bestCols}, ${bestSize}px)`;
-  game.style.gridGap = `${padding}px`;
+            const photoURL = currentUser.photoURL || 'https://i.imgur.com/sC22S2A.png';
+            const displayName = currentUser.displayName || currentUser.email.split('@')[0];
 
-  const cards = game.querySelectorAll('.card');
-  cards.forEach(card => {
-    card.style.width = `${bestSize}px`;
-    card.style.height = `${bestSize}px`;
-    card.style.fontSize = `${bestSize * 0.4}px`;
-  });
-}
-
-window.addEventListener("resize", calculateCardSize);
-
-
-
-         calculateCardSize(); // เตรียม layout
-};
-
-function calculateCardSize() {
-  const game = document.getElementById("game");
-  const padding = 10;
-  const cardCount = game.children.length;
-  const containerWidth = window.innerWidth * 0.95;
-  const containerHeight = window.innerHeight * 0.7;
-
-  let bestCols = 1;
-  let bestSize = 0;
-
-  for (let cols = 1; cols <= cardCount; cols++) {
-    const rows = Math.ceil(cardCount / cols);
-    const cardWidth = Math.floor((containerWidth - padding * (cols - 1)) / cols);
-    const cardHeight = Math.floor((containerHeight - padding * (rows - 1)) / rows);
-    const size = Math.min(cardWidth, cardHeight);
-
-    const totalWidth = size * cols + padding * (cols - 1);
-    const totalHeight = size * rows + padding * (rows - 1);
-
-    if (totalWidth <= containerWidth && totalHeight <= containerHeight && size > bestSize) {
-      bestSize = size;
-      bestCols = cols;
+            profileIconImg.src = photoURL;
+            sidebarProfileImg.src = photoURL;
+            sidebarUserName.textContent = displayName;
+            sidebarUserEmail.textContent = currentUser.email;
+            initializeGameUI();
+        } else {
+            authContainer.style.display = 'block'; // Use block for the new form container
+            gameArea.style.display = 'none';
+            topBar.style.display = 'none';
+            profileIconContainer.style.display = 'none';
+            closeSidebar();
+        }
     }
-  }
-
-  game.style.gridTemplateColumns = `repeat(${bestCols}, ${bestSize}px)`;
-  game.style.gridGap = `${padding}px`;
-
-  const cards = game.querySelectorAll('.card');
-  cards.forEach(card => {
-    card.style.width = `${bestSize}px`;
-    card.style.height = `${bestSize}px`;
-    card.style.fontSize = `${bestSize * 0.4}px`;
-  });
-}
-window.addEventListener("resize", calculateCardSize);
-
-
-function calculateOptimalGrid(cardCount = 24) {
-  const game = document.getElementById("game");
-  const padding = 10;
-
-  const containerWidth = game.clientWidth;
-  const containerHeight = game.clientHeight;
-
-  let bestCols = 1;
-  let bestRows = cardCount;
-  let bestSize = 0;
-
-  for (let cols = 1; cols <= cardCount; cols++) {
-    const rows = Math.ceil(cardCount / cols);
-    const cardWidth = Math.floor((containerWidth - padding * (cols + 1)) / cols);
-    const cardHeight = Math.floor((containerHeight - padding * (rows + 1)) / rows);
-    const size = Math.min(cardWidth, cardHeight);
-
-    if (size > bestSize) {
-      bestSize = size;
-      bestCols = cols;
-      bestRows = rows;
+    function openSidebar() { sidebar.classList.add('open'); sidebarOverlay.style.display = 'block'; }
+    function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.style.display = 'none'; }
+    
+    async function register() {
+        const email = document.getElementById('email').value, password = document.getElementById('password').value;
+        if (!email || !password) return alert('กรุณากรอกอีเมลและรหัสผ่าน');
+        try { await auth.createUserWithEmailAndPassword(email, password); }
+        catch (error) { alert('ลงทะเบียนล้มเหลว: ' + error.message); }
     }
-  }
+    async function login() {
+        const email = document.getElementById('email').value, password = document.getElementById('password').value;
+        if (!email || !password) return alert('กรุณากรอกอีเมลและรหัสผ่าน');
+        try { await auth.signInWithEmailAndPassword(email, password); }
+        catch (error) { alert('เข้าสู่ระบบล้มเหลว: ' + error.message); }
+    }
+    async function loginWithGoogle() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        try { await auth.signInWithPopup(provider); }
+        catch (error) { alert('เข้าสู่ระบบด้วย Google ล้มเหลว: ' + error.message); }
+    }
+    async function logout() {
+        try {
+            await auth.signOut();
+            resetGame();
+        } catch (error) { alert('ออกจากระบบล้มเหลว: ' + error.message); }
+    }
 
-  return { cols: bestCols, rows: bestRows, size: bestSize };
-}
-function startGame() {
-  document.getElementById("startBtn").style.display = "none";
-  document.getElementById("restartBtn").style.display = "inline-block";
-  remainingChars = shuffle([...chars]);
-  startRound();
-  
-}
-function restartGame() {
-  closePopup();
-  clearInterval(countdownInterval);
-  document.getElementById("game").innerHTML = "";
-  startRound();
-}
+    auth.onAuthStateChanged((user) => { 
+        currentUser = user; 
+        updateAuthUI(); 
+    });
+    profileIconContainer.onclick = openSidebar;
+    sidebarOverlay.onclick = closeSidebar;
+    sidebarCloseBtn.onclick = closeSidebar;
+    sidebarLogoutBtn.onclick = logout;
+    window.addEventListener("resize", calculateAndApplyLayout);
 
+
+    function setFullHeight() {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    window.addEventListener('load', setFullHeight);
+    window.addEventListener('resize', setFullHeight);
 
     </script>
-
 </body>
 </html>
-
-
-
-
