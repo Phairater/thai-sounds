@@ -35,8 +35,7 @@
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #333; color: white; 
-            /* เริ่มต้นให้ซ่อนไว้ก่อน */
-            display: none; 
+            display: flex; /* ✅ 1. เปลี่ยนเป็น flex เพื่อให้แสดงผลทันที */
             flex-direction: column; justify-content: center; align-items: center;
             z-index: 2000; font-family: 'TH Sarabun New', sans-serif;
         }
@@ -118,8 +117,23 @@
 
         /* --- Game Grid & Cards --- */
         #gameArea { display: none; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; height: 100%; padding: 80px 15px 15px 15px; box-sizing: border-box; }
-        #gameArea h1 { font-size: 2.5em; color: #00796b; margin: 0; }
-        #gameArea .controls { margin: 15px 0; }
+        
+        .title-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 15px; 
+        }
+        #gameArea h1 { 
+            font-size: 2.5em; 
+            color: #00796b; 
+            margin: 0; 
+        }
+        #gameArea .controls { 
+            margin: 0; 
+        }
+        
         #gameArea #startBtn, #gameArea #restartBtn { padding: 10px 25px; font-size: 1.2em; border: none; border-radius: 8px; color: white; background-color: #007bff; cursor: pointer; }
         #gameArea #restartBtn { background-color: #28a745; }
         #game { display: grid; justify-content: center; align-content: center; flex-grow: 1; width: 100%; gap: 10px; }
@@ -171,63 +185,66 @@
     <div id="main-wrapper">
         <div id="authContainer">
              <div class="login-content">
-                  <div class="login-form">
-                         <ul class="nav nav-tabs nav-fill mb-4" id="authTab" role="tablist">
-                                 <li class="nav-item" role="presentation">
-                                       <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-pane" type="button" role="tab" aria-controls="login-pane" aria-selected="true">เข้าสู่ระบบ</button>
-                                 </li>
-                                 <li class="nav-item" role="presentation">
-                                       <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register-pane" type="button" role="tab" aria-controls="register-pane" aria-selected="false">ลงทะเบียน</button>
-                                 </li>
-                         </ul>
-                         <div class="tab-content" id="authTabContent">
-                                 <div class="tab-pane fade show active" id="login-pane" role="tabpanel" aria-labelledby="login-tab" tabindex="0">
-                                       <form onsubmit="event.preventDefault(); login();">
-                                             <div class="mb-3">
-                                                   <input type="email" class="form-control form-control-lg" id="login-email" placeholder="อีเมล" required>
-                                             </div>
-                                             <div class="mb-4">
-                                                   <input type="password" class="form-control form-control-lg" id="login-password" placeholder="รหัสผ่าน" required>
-                                             </div>
-                                             <div class="d-grid gap-2">
-                                                   <button type="submit" class="btn btn-primary action-btn">เข้าสู่ระบบ</button>
-                                             </div>
-                                             <div class="text-center my-3 text-muted">&mdash; หรือ &mdash;</div>
-                                             <button type="button" onclick="loginWithGoogle()" class="btn google-btn action-btn">
-                                                   <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google icon" class="google-icon" />
-                                                   เข้าสู่ระบบด้วย Google
-                                             </button>
-                                       </form>
-                                 </div>
-                                 <div class="tab-pane fade" id="register-pane" role="tabpanel" aria-labelledby="register-tab" tabindex="0">
-                                       <form onsubmit="event.preventDefault(); register();">
-                                             <div class="mb-3">
-                                                   <input type="text" class="form-control form-control-lg" id="register-name" placeholder="ชื่อ" required>
-                                             </div>
-                                             <div class="mb-3">
-                                                   <input type="email" class="form-control form-control-lg" id="register-email" placeholder="อีเมล" required>
-                                             </div>
-                                             <div class="mb-3">
-                                                   <input type="password" class="form-control form-control-lg" id="register-password" placeholder="รหัสผ่าน" required>
-                                             </div>
-                                             <div class="mb-4">
-                                                   <input type="password" class="form-control form-control-lg" id="register-confirm-password" placeholder="ยืนยันรหัสผ่าน" required>
-                                             </div>
-                                             <div class="d-grid">
-                                                   <button type="submit" class="btn btn-primary action-btn">สร้างบัญชี</button>
-                                             </div>
-                                       </form>
-                                 </div>
-                         </div>
-                  </div>
+                    <div class="login-form">
+                            <ul class="nav nav-tabs nav-fill mb-4" id="authTab" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-pane" type="button" role="tab" aria-controls="login-pane" aria-selected="true">เข้าสู่ระบบ</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register-pane" type="button" role="tab" aria-controls="register-pane" aria-selected="false">ลงทะเบียน</button>
+                                    </li>
+                            </ul>
+                            <div class="tab-content" id="authTabContent">
+                                    <div class="tab-pane fade show active" id="login-pane" role="tabpanel" aria-labelledby="login-tab" tabindex="0">
+                                            <form onsubmit="event.preventDefault(); login();">
+                                                    <div class="mb-3">
+                                                            <input type="email" class="form-control form-control-lg" id="login-email" placeholder="อีเมล" required>
+                                                    </div>
+                                                    <div class="mb-4">
+                                                            <input type="password" class="form-control form-control-lg" id="login-password" placeholder="รหัสผ่าน" required>
+                                                    </div>
+                                                    <div class="d-grid gap-2">
+                                                            <button type="submit" class="btn btn-primary action-btn">เข้าสู่ระบบ</button>
+                                                    </div>
+                                                    <div class="text-center my-3 text-muted">&mdash; หรือ &mdash;</div>
+                                                    <button type="button" onclick="loginWithGoogle()" class="btn google-btn action-btn">
+                                                            <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google icon" class="google-icon" />
+                                                            เข้าสู่ระบบด้วย Google
+                                                    </button>
+                                            </form>
+                                    </div>
+                                    <div class="tab-pane fade" id="register-pane" role="tabpanel" aria-labelledby="register-tab" tabindex="0">
+                                            <form onsubmit="event.preventDefault(); register();">
+                                                    <div class="mb-3">
+                                                            <input type="text" class="form-control form-control-lg" id="register-name" placeholder="ชื่อ" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                            <input type="email" class="form-control form-control-lg" id="register-email" placeholder="อีเมล" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                            <input type="password" class="form-control form-control-lg" id="register-password" placeholder="รหัสผ่าน" required>
+                                                    </div>
+                                                    <div class="mb-4">
+                                                            <input type="password" class="form-control form-control-lg" id="register-confirm-password" placeholder="ยืนยันรหัสผ่าน" required>
+                                                    </div>
+                                                    <div class="d-grid">
+                                                            <button type="submit" class="btn btn-primary action-btn">สร้างบัญชี</button>
+                                                    </div>
+                                            </form>
+                                    </div>
+                            </div>
+                    </div>
              </div>
         </div>
         <div id="gameArea">
-            <h1>เกมจับคู่พยัญชนะไทย</h1>
-            <div class="controls">
-                <button id="startBtn" onclick="startGame()">เริ่มเกม</button>
-                <button id="restartBtn" onclick="restartGame()" style="display:none;">เล่นต่อ</button>
+            <div class="title-container">
+                <h1>เกมจับคู่พยัญชนะไทย</h1>
+                <div class="controls">
+                    <button id="startBtn" onclick="startGame()">เริ่มเกม</button>
+                    <button id="restartBtn" onclick="restartGame()" style="display:none;">เล่นต่อ</button>
+                </div>
             </div>
+            
             <div id="game"></div>
             <div id="popup">
                 <div id="popupBox">
@@ -259,6 +276,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        // --- โค้ด JavaScript ทั้งหมดเหมือนเดิม ไม่ต้องแก้ไข ---
         // --- Firebase Initialization ---
         const firebaseConfig = {
             apiKey: "AIzaSyA1DVvalDuthN0-pUwECByT7-Ur5uTlsEE",
@@ -318,12 +336,9 @@
             const gap = 10;
             const gameAreaStyle = window.getComputedStyle(gameArea);
             const availableWidth = gameArea.clientWidth - (parseInt(gameAreaStyle.paddingLeft) + parseInt(gameAreaStyle.paddingRight));
-            const h1 = gameArea.querySelector('h1');
-            const controls = gameArea.querySelector('.controls');
-            const h1Height = h1 ? h1.offsetHeight : 0;
-            const controlsHeight = controls ? controls.offsetHeight : 0;
-            const topOffset = h1Height + controlsHeight;
-            const availableHeight = gameArea.clientHeight - topOffset - 20;
+            const titleContainer = gameArea.querySelector('.title-container');
+            const titleContainerHeight = titleContainer ? titleContainer.offsetHeight : 0;
+            const availableHeight = gameArea.clientHeight - titleContainerHeight - 20;
             let bestLayout = { cols: 0, cardSize: 0 };
             for (let cols = 3; cols <= numCards / 2; cols++) {
                 if (numCards % cols !== 0 && cols > numCards / 2) continue;
@@ -404,7 +419,6 @@
             });
         }
         
-        // --- UI Update Functions ---
         function updateScoreDisplay() {
             totalScore = baseScore + bonusScore;
             scoreValue.textContent = totalScore;
@@ -444,7 +458,6 @@
             initializeGameUI();
         }
 
-        // --- Game Sequence Functions ---
         function showFinalDiamond(finalCallback) {
             playAudio(diamondSound);
             finalRewardsContainer.innerHTML = '';
@@ -582,7 +595,6 @@
             setTimeout(() => { collectedCoin.classList.add('collected'); }, 10);
         }
 
-        // --- Core Game Flow ---
         function startGame() {
             document.getElementById("startBtn").style.display = "none";
             restartBtn.style.display = "inline-block";
@@ -689,10 +701,9 @@
             }
         }
 
-        // --- Auth Functions & Listeners ---
         function updateAuthUI() {
             if (currentUser) {
-                loadingScreen.style.display = 'none'; // ซ่อนหน้าจอโหลด
+                loadingScreen.style.display = 'none';
                 authContainer.style.display = 'none';
                 gameArea.style.display = 'flex';
                 topBar.style.display = 'flex';
@@ -717,30 +728,39 @@
         function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.style.display = 'none'; }
         
         async function register() {
-            // ... (โค้ดส่วน register เหมือนเดิม) ...
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            if (!name || !email || !password) return alert('กรุณากรอกข้อมูลให้ครบทุกช่อง');
+            if (password !== confirmPassword) return alert('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await userCredential.user.updateProfile({ displayName: name });
+            } catch (error) {
+                alert('ลงทะเบียนล้มเหลว: ' + error.message);
+            }
         }
 
         async function login() {
-            // ✅ แก้ไขตรงนี้: แสดงหน้าจอโหลดก่อนเริ่มล็อกอิน
             loadingScreen.querySelector('.loading-text').textContent = "กำลังเข้าสู่ระบบ...";
             loadingScreen.style.display = 'flex';
 
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
             if (!email || !password) {
-                loadingScreen.style.display = 'none'; // ซ่อนหน้าจอโหลดถ้าข้อมูลไม่ครบ
+                loadingScreen.style.display = 'none';
                 return alert('กรุณากรอกอีเมลและรหัสผ่าน');
             }
             try {
                 await auth.signInWithEmailAndPassword(email, password);
             } catch (error) {
-                loadingScreen.style.display = 'none'; // ซ่อนหน้าจอโหลดถ้าล็อกอินผิดพลาด
+                loadingScreen.style.display = 'none';
                 alert('เข้าสู่ระบบล้มเหลว: ' + error.message);
             }
         }
 
         async function loginWithGoogle() {
-            // ✅ แก้ไขตรงนี้: แสดงหน้าจอโหลดก่อนเริ่มล็อกอิน
             loadingScreen.querySelector('.loading-text').textContent = "กำลังเข้าสู่ระบบ...";
             loadingScreen.style.display = 'flex';
             
@@ -749,7 +769,7 @@
                  const result = await firebase.auth().signInWithPopup(provider);
                  const user = result.user;
             } catch (error) {
-                 loadingScreen.style.display = 'none'; // ซ่อนหน้าจอโหลดถ้าล็อกอินผิดพลาด
+                 loadingScreen.style.display = 'none';
                  console.error(error);
                  alert('เข้าสู่ระบบด้วย Google ล้มเหลว: ' + error.message);
             }
@@ -764,14 +784,11 @@
             }
         }
 
-        // ✅ แก้ไขตรงนี้: ปรับ Logic การทำงานให้สอดคล้องกัน
         auth.onAuthStateChanged((user) => {
             currentUser = user;
             if (user) {
-                // เมื่อล็อกอินสำเร็จ (ไม่ว่าจะด้วยวิธีใด) ให้เริ่มโหลดไฟล์เกม
                 preloadAllAssets(updateAuthUI, "กำลังโหลดไฟล์เกม...");
             } else {
-                // ถ้าไม่มี user ให้แสดงหน้าล็อกอิน
                 updateAuthUI();
             }
         });
@@ -788,8 +805,7 @@
         }
         window.addEventListener('load', () => {
              setFullHeight();
-             // เมื่อหน้าเว็บโหลดครั้งแรก ให้แสดงหน้า auth เลย
-             updateAuthUI();
+             // ✅ 2. ลบ updateAuthUI(); ออก ไม่ต้องเรียกใช้ตรงนี้แล้ว
         });
         window.addEventListener('resize', setFullHeight);
     </script>
