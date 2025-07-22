@@ -703,7 +703,7 @@
           try {
               const result = await firebase.auth().signInWithPopup(provider);
               const user = result.user;
-              alert('ยินดีต้อนรับ ' + user.displayName);
+              
               // ทำอย่างอื่นต่อ เช่น redirect หรืออัปเดต UI
           } catch (error) {
               console.error(error); // แสดงใน console ด้วย
