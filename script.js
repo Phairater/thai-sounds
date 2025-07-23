@@ -190,17 +190,85 @@ function openSidebar() { sidebar.classList.add('open'); sidebarOverlay.style.dis
 function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.style.display = 'none'; }
 
 // --- ฟังก์ชันเกี่ยวกับ Firebase Authentication ---
-async function register() { 
-    // โค้ดสำหรับลงทะเบียนด้วยอีเมลและรหัสผ่าน
+async function register() {
+    // ดึงข้อมูลจากฟอร์มลงทะเบียน
+    const name = document.getElementById('register-name').value;
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+    const confirmPassword = document.getElementById('register-confirm-password').value;
+
+    // ตรวจสอบว่ารหัสผ่านตรงกันหรือไม่
+    if (password !== confirmPassword) {
+        alert("รหัสผ่านไม่ตรงกัน กรุณาลองใหม่อีกครั้ง");
+        return;
+    }
+
+    try {
+        // สร้างผู้ใช้ใหม่ใน Firebase Authentication
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        
+        // อัปเดตชื่อผู้ใช้ (Display Name)
+        await userCredential.user.updateProfile({
+            displayName: name
+        });
+        
+        // onAuthStateChanged จะจัดการอัปเดต UI ให้เองเมื่อลงทะเบียนสำเร็จ
+        console.log("Registered and logged in successfully:", userCredential.user);
+
+    } catch (error) {
+        console.error("Error registering:", error);
+        alert("เกิดข้อผิดพลาดในการลงทะเบียน: " + error.message);
+    }
 }
-async function login() { 
-    // โค้ดสำหรับเข้าสู่ระบบด้วยอีเมลและรหัสผ่าน
+
+async function login() {
+    // ดึงข้อมูลจากฟอร์มล็อกอิน
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+
+    try {
+        // สั่งให้ Firebase ล็อกอินด้วยอีเมลและรหัสผ่าน
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        
+        // onAuthStateChanged จะจัดการอัปเดต UI ให้เองเมื่อล็อกอินสำเร็จ
+        console.log("Logged in successfully:", userCredential.user);
+
+    } catch (error) {
+        console.error("Error logging in:", error);
+        alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง: " + error.message);
+    }
 }
-async function loginWithGoogle() { 
-    // โค้ดสำหรับเข้าสู่ระบบด้วย Google
+
+async function loginWithGoogle() {
+    try {
+        // สร้างตัวจัดการสำหรับล็อกอินด้วย Google
+        const provider = new firebase.auth.GoogleAuthProvider();
+        
+        // แสดงหน้าต่าง Popup ของ Google เพื่อให้ผู้ใช้ล็อกอิน
+        const result = await auth.signInWithPopup(provider);
+
+        // onAuthStateChanged จะจัดการอัปเดต UI ให้เองเมื่อล็อกอินสำเร็จ
+        console.log("Logged in with Google successfully:", result.user);
+
+    } catch (error) {
+        console.error("Error with Google login:", error);
+        alert("เกิดข้อผิดพลาดในการล็อกอินด้วย Google: " + error.message);
+    }
 }
-async function logout() { 
-    // โค้ดสำหรับออกจากระบบ
+async function logout() {
+    try {
+        // สั่งให้ Firebase ทำการ Sign Out
+        await auth.signOut();
+        
+        // เมื่อ Sign Out สำเร็จ ไม่ต้องทำอะไรเพิ่ม
+        // เพราะ onAuthStateChanged จะตรวจจับการเปลี่ยนแปลงและอัปเดตหน้าเว็บให้เอง
+        console.log("User logged out successfully.");
+
+    } catch (error) {
+        // หากเกิดข้อผิดพลาดขึ้น
+        console.error("Error logging out:", error);
+        alert("เกิดข้อผิดพลาดในการออกจากระบบ: " + error.message);
+    }
 }
 
 // ===== 3. บทเรียน (Lesson) =====
